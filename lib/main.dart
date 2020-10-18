@@ -22,6 +22,7 @@ class MyApp extends StatelessWidget {
         // TODO: Wymienić tą czcionkę jak komuś zależy
         textTheme: Typography.whiteHelsinki,
       ),
+      // Odpal SplashScreen
       home: SplashScreen(),
     );
   }
