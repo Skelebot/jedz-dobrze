@@ -1,16 +1,12 @@
-# hackaton
+# Hackaton
 
-A new Flutter project.
+[![Build Status](https://travis-ci.com/Skelebot/hackaton.svg?token=jVjt5dHumaDUboMqZmdt&branch=master)](https://travis-ci.com/Skelebot/hackaton)
 
-## Getting Started
+Projekt na hackaton Hack Heroes *2020*
 
-This project is a starting point for a Flutter application.
+Zbudowane za pomocą frameworku Flutter
 
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://flutter.dev/docs/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://flutter.dev/docs/cookbook)
-
-For help getting started with Flutter, view our
-[online documentation](https://flutter.dev/docs), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Autorzy:
+ * Antoni Simka <antonisimka.8@gmail.com>
+ * Łukasz Dragon
+ * Kacper Olszowski
