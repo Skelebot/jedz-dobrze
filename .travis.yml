@@ -1,11 +1,22 @@
-language: dart
-dist: xenial
+language: android
+android:
+  components:
+    - build-tools-28.0.3
+    - android-29
+    - tools
+    - platform-tools
+    - extra
+  licenses:
+    - 'android-sdk-license-.+'
+    - 'google-gdk-license-.+'
 addons:
   apt:
     packages:
     - lib32stdc++6
 install:
 - git clone https://github.com/flutter/flutter.git -b stable
+- "yes | ./flutter/bin/flutter doctor --android-licenses"
+- "yes | sdkmanager \"platforms;android-28\""
 - "./flutter/bin/flutter doctor"
 script:
 - "./flutter/bin/flutter build apk"
