@@ -15,7 +15,6 @@ addons:
     - lib32stdc++6
 install:
 - git clone https://github.com/flutter/flutter.git -b stable
-- "yes | ./flutter/bin/flutter doctor --android-licenses"
 - "yes | sdkmanager \"platforms;android-28\""
 - "./flutter/bin/flutter doctor"
 script:
