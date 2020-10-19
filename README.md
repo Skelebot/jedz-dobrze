@@ -8,5 +8,5 @@ Zbudowane za pomocą frameworku Flutter
 
 Autorzy:
  * Antoni Simka <antonisimka.8@gmail.com>
- * Łukasz Dragon
+ * Łukasz Dragon <lukasz.b.dragon@gmail.com>
  * Kacper Olszowski

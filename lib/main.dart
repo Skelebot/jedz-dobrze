@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
 
 import 'splash_screen.dart';
+import 'select_screen.dart';
+
+// image picker
+import 'package:image_picker_gallery_camera/image_picker_gallery_camera.dart';
+
+import 'dart:io';
 
 // Robie jebany performance
 void main() => runApp(MyApp());
@@ -47,17 +53,40 @@ class HackatonHome extends StatefulWidget {
 }
 
 class HackatonHomeState extends State<HackatonHome> {
-  int _counter = 0;
+  Image _image;
 
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
+  void _scanImage(ImgSource source) async {
+    // get image from source (gallery, camera or both)
+    var pickedImage = await ImagePickerGC.pickImage(
+      context: context,
+      source: source,
+      // camera styling
+      cameraIcon: Icon(
+        Icons.add_a_photo,
+        color: Colors.red,
+      ),
+      cameraText: Text(
+        "Nowe",
+        style: TextStyle(color: Colors.black),
+      ),
+
+      // gallery styling
+      galleryIcon: Icon(
+        Icons.add_photo_alternate,
+        color: Colors.red,
+      ),
+      galleryText: Text(
+        "Z Galerii",
+        style: TextStyle(color: Colors.black),
+      ),
+    );
+
+    // create select_screen if image was picked
+    if (pickedImage != null) {
+      Navigator.of(context).pushReplacement(MaterialPageRoute(
+          builder: (context) =>
+              SelectScreen(Image.file(File(pickedImage.path)))));
+    }
   }
 
   @override
@@ -80,15 +109,7 @@ class HackatonHomeState extends State<HackatonHome> {
         // in the middle of the parent.
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.bodyText1,
-            ),
-          ],
+          children: <Widget>[],
         ),
       ),
       // ActionButton na środku
@@ -96,7 +117,7 @@ class HackatonHomeState extends State<HackatonHome> {
       floatingActionButton: Padding(
           padding: const EdgeInsets.only(bottom: 24),
           child: FloatingActionButton.extended(
-            onPressed: _incrementCounter,
+            onPressed: () => _scanImage(ImgSource.Both),
             tooltip: 'Skanuj',
             elevation: 3.0,
             icon: Icon(Icons.camera, color: Theme.of(context).cursorColor),
