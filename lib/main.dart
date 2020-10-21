@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -7,10 +8,9 @@ import 'package:path_provider/path_provider.dart';
 
 import 'dart:async';
 import 'package:flutter/services.dart';
-import 'package:tesseract_ocr/tesseract_ocr.dart';
 import 'package:simple_ocr_plugin/simple_ocr_plugin.dart';
-import 'package:flutter_mobile_vision/flutter_mobile_vision.dart';
-import 'ocr_text_detail.dart';
+import 'package:image/image.dart' as image;
+import 'package:diacritic/diacritic.dart';
 
 import 'splash_screen.dart';
 
@@ -41,7 +41,7 @@ class MyApp extends StatelessWidget {
 }
 
 class HackatonHome extends StatefulWidget {
-  HackatonHome({Key key, this.title}) : super(key: key);
+  HackatonHome({Key key, this.title, this.args}) : super(key: key);
 
   // This widget is the home page of your application. It is stateful, meaning
   // that it has a State object (defined below) that contains fields that affect
@@ -53,34 +53,27 @@ class HackatonHome extends StatefulWidget {
   // always marked "final".
 
   final String title;
+  final MainAppArguments args;
 
   @override
-  HackatonHomeState createState() => HackatonHomeState();
+  HackatonHomeState createState() => HackatonHomeState(args);
 }
 
 class HackatonHomeState extends State<HackatonHome> {
-  String _extractedText = 'Unknown';
-  int _cameraOcr = FlutterMobileVision.CAMERA_BACK;
-  bool _autoFocusOcr = true;
-  bool _torchOcr = false;
-  bool _multipleOcr = false;
-  bool _waitTapOcr = false;
-  bool _showTextOcr = true;
-  Size _previewOcr;
-  List<OcrText> _textsOcr = [];
+  String _extractedText;
+  final MainAppArguments arguments;
 
-  var aBody;
+  HackatonHomeState(this.arguments);
 
   @override
   void initState() {
     super.initState();
-    FlutterMobileVision.start().then((x) => setState(() {}));
     initPlatformState();
-    aBody = false;
   }
 
   Future<void> initPlatformState() async {
     String extractedText;
+    String extractedTextGrayscale;
 
     try {
       final Directory directory = await getTemporaryDirectory();
@@ -88,23 +81,77 @@ class HackatonHomeState extends State<HackatonHome> {
         directory.path,
         "tmp_1.jpg",
       );
-      final file = await rootBundle.load('assets/test/primgles.jpg');
+      final file = await rootBundle.load('assets/test/cola.jpg');
       final Uint8List bytes = file.buffer.asUint8List(
         file.offsetInBytes,
         file.lengthInBytes,
       );
       await File(imagePath).writeAsBytes(bytes);
 
-      String extractedText_tesseract =
-          await TesseractOcr.extractText(imagePath, language: 'pol');
-      String extractedText_simpleplugin =
-          await SimpleOcrPlugin.performOCR(imagePath);
+      extractedText = await SimpleOcrPlugin.performOCR(imagePath);
+      final json = jsonDecode(extractedText);
+      extractedText = json['text'];
+
+      // Try a grayscaled image for better results
+      //var img = image.decodeImage(File(imagePath).readAsBytesSync());
+      //var grayscaled = image.grayscale(img);
+      //final grayscalePath = join(directory.path, "tmp_grayscale.jpg");
+      //File(grayscalePath).writeAsBytesSync(image.encodeJpg(grayscaled));
+      //extractedTextGrayscale = await SimpleOcrPlugin.performOCR(grayscalePath);
+      //final jsong = jsonDecode(extractedTextGrayscale);
+      //extractedTextGrayscale = jsong['text'];
+
+      // Autocorrect
+      extractedText = removeDiacritics(extractedText);
+      // Remove interpunction
+      var regexp = RegExp(r'[\?!\"\[\]]', caseSensitive: false);
+      extractedText = extractedText.replaceAll(regexp, '');
+      // Replace sequences of words that may as well be a comma with a comma
+      regexp = RegExp(r'(w tym)|[:\n\(\)\.]', caseSensitive: false);
+      extractedText = extractedText.replaceAll(regexp, ',');
+      // Now replace duplicate commas resulting from the previous regexp
+      regexp = RegExp(r',+', caseSensitive: false);
+      extractedText = extractedText.replaceAll(regexp, ',');
+      // Fix up spaced E additions
+      regexp = RegExp(r'e (?=\d\d\d)', caseSensitive: false);
+      extractedText = extractedText.replaceAll(regexp, 'e');
+      // Remove any percentages
+      regexp = RegExp(r'((,|\d)+%)', caseSensitive: false);
+      extractedText = extractedText.replaceAll(regexp, '');
+      // Replace weird misunderstandings
+      var repl = {
+        r'(\|)': '',
+      };
+      for (var pair in repl.entries) {
+        regexp = RegExp(pair.key, caseSensitive: false);
+        extractedText = extractedText.replaceAll(regexp, pair.value);
+      }
+
+      var ingredients = extractedText.split(',').map((ingredient) {
+        var words = ingredient.trim().split(' ');
+        // Remove duplicate words
+        words = words.map((w) => w.trim().toLowerCase()).toSet().toList();
+        words = words.map((word) {
+          // Autocorrect single words using fuzzy matching and levenshtein distance
+          final output = arguments.dictionary.search(word);
+          if (output[0].score > 0.7) {
+            // If we are nearly sure this is the word, return the corrected version
+            return output[0].text;
+          } else {
+            // Give up
+            return word;
+          }
+        }).toList();
+        return words.join(' ');
+      }).toList();
+
+      extractedText = ingredients.toString();
     } on PlatformException {
       extractedText = 'Failed to extract text';
     }
 
     setState(() {
-      _extractedText = extractedText;
+      _extractedText = extractedText; // + '\n' + extractedTextGrayscale;
     });
   }
 
@@ -126,258 +173,36 @@ class HackatonHomeState extends State<HackatonHome> {
       body: Center(
           // Center is a layout widget. It takes a single child and positions it
           // in the middle of the parent.
-          child: Builder(builder: (context) {
-        if (aBody == false) {
-          return Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              Text(
-                'Extracted text: ',
-              ),
-              Text(
-                '$_extractedText',
-                style: Theme.of(context).textTheme.bodyText1,
-              ),
-              Image(
-                image: AssetImage(
-                  'assets/test/primgles.jpg',
-                ),
-              ),
-            ],
-          );
-        } else {
-          return _getOcrScreen(context);
-        }
-      })),
+          child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          Text(
+            'Extracted text: ',
+          ),
+          Image(
+            image: AssetImage(
+              'assets/test/cola.jpg',
+            ),
+          ),
+          _extractedText == null
+              ? CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xffffffff)))
+              : Text('$_extractedText',
+                  style: Theme.of(context).textTheme.bodyText1),
+        ],
+      )),
       // ActionButton na środku
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       floatingActionButton: Padding(
           padding: const EdgeInsets.only(bottom: 24),
           child: FloatingActionButton.extended(
-            //onPressed: _incrementCounter,
-            onPressed: () {
-              aBody = true;
-              setState(() {});
-            },
+            onPressed: () {},
             tooltip: 'Skanuj',
             elevation: 3.0,
             icon: Icon(Icons.camera, color: Theme.of(context).cursorColor),
             label: Text('SKANUJ', style: Theme.of(context).textTheme.button),
             backgroundColor: Theme.of(context).buttonColor,
           )),
-    );
-  }
-
-  ///
-  /// Camera list
-  ///
-  List<DropdownMenuItem<int>> _getCameras() {
-    List<DropdownMenuItem<int>> cameraItems = [];
-
-    cameraItems.add(DropdownMenuItem(
-      child: Text('BACK'),
-      value: FlutterMobileVision.CAMERA_BACK,
-    ));
-
-    cameraItems.add(DropdownMenuItem(
-      child: Text('FRONT'),
-      value: FlutterMobileVision.CAMERA_FRONT,
-    ));
-
-    return cameraItems;
-  }
-
-  ///
-  /// Preview sizes list
-  ///
-  List<DropdownMenuItem<Size>> _getPreviewSizes(int facing) {
-    List<DropdownMenuItem<Size>> previewItems = [];
-
-    List<Size> sizes = FlutterMobileVision.getPreviewSizes(facing);
-
-    if (sizes != null) {
-      sizes.forEach((size) {
-        previewItems.add(
-          DropdownMenuItem(
-            child: Text(size.toString()),
-            value: size,
-          ),
-        );
-      });
-    } else {
-      previewItems.add(
-        DropdownMenuItem(
-          child: Text('Empty'),
-          value: null,
-        ),
-      );
-    }
-
-    return previewItems;
-  }
-
-  ///
-  /// OCR Screen
-  ///
-  Widget _getOcrScreen(BuildContext context) {
-    List<Widget> items = [];
-
-    items.add(Padding(
-      padding: const EdgeInsets.only(
-        top: 8.0,
-        left: 18.0,
-        right: 18.0,
-      ),
-      child: const Text('Camera:'),
-    ));
-
-    items.add(Padding(
-      padding: const EdgeInsets.only(
-        left: 18.0,
-        right: 18.0,
-      ),
-      child: DropdownButton(
-        items: _getCameras(),
-        onChanged: (value) {
-          _previewOcr = null;
-          setState(() => _cameraOcr = value);
-        },
-        value: _cameraOcr,
-      ),
-    ));
-
-    items.add(Padding(
-      padding: const EdgeInsets.only(
-        top: 8.0,
-        left: 18.0,
-        right: 18.0,
-      ),
-      child: const Text('Preview size:'),
-    ));
-
-    items.add(Padding(
-      padding: const EdgeInsets.only(
-        left: 18.0,
-        right: 18.0,
-      ),
-      child: DropdownButton(
-        items: _getPreviewSizes(_cameraOcr),
-        onChanged: (value) {
-          setState(() => _previewOcr = value);
-        },
-        value: _previewOcr,
-      ),
-    ));
-
-    items.add(SwitchListTile(
-      title: const Text('Auto focus:'),
-      value: _autoFocusOcr,
-      onChanged: (value) => setState(() => _autoFocusOcr = value),
-    ));
-
-    items.add(SwitchListTile(
-      title: const Text('Torch:'),
-      value: _torchOcr,
-      onChanged: (value) => setState(() => _torchOcr = value),
-    ));
-
-    items.add(SwitchListTile(
-      title: const Text('Return all texts:'),
-      value: _multipleOcr,
-      onChanged: (value) => setState(() => _multipleOcr = value),
-    ));
-
-    items.add(SwitchListTile(
-      title: const Text('Capture when tap screen:'),
-      value: _waitTapOcr,
-      onChanged: (value) => setState(() => _waitTapOcr = value),
-    ));
-
-    items.add(SwitchListTile(
-      title: const Text('Show text:'),
-      value: _showTextOcr,
-      onChanged: (value) => setState(() => _showTextOcr = value),
-    ));
-
-    items.add(
-      Padding(
-        padding: const EdgeInsets.only(
-          left: 18.0,
-          right: 18.0,
-          bottom: 12.0,
-        ),
-        child: RaisedButton(
-          onPressed: _read,
-          child: Text('READ!'),
-        ),
-      ),
-    );
-
-    items.addAll(
-      ListTile.divideTiles(
-        context: context,
-        tiles: _textsOcr
-            .map(
-              (ocrText) => OcrTextWidget(ocrText),
-            )
-            .toList(),
-      ),
-    );
-
-    return ListView(
-      padding: const EdgeInsets.only(
-        top: 12.0,
-      ),
-      children: items,
-    );
-  }
-
-  ///
-  /// OCR Method
-  ///
-  Future<Null> _read() async {
-    List<OcrText> texts = [];
-    try {
-      texts = await FlutterMobileVision.read(
-        flash: _torchOcr,
-        autoFocus: _autoFocusOcr,
-        multiple: _multipleOcr,
-        waitTap: _waitTapOcr,
-        showText: _showTextOcr,
-        preview: _previewOcr,
-        camera: _cameraOcr,
-        fps: 5.0,
-      );
-    } on Exception {
-      texts.add(OcrText('Failed to recognize text.'));
-    }
-
-    if (!mounted) return;
-
-    setState(() => _textsOcr = texts);
-  }
-}
-
-///
-/// OcrTextWidget
-///
-class OcrTextWidget extends StatelessWidget {
-  final OcrText ocrText;
-
-  OcrTextWidget(this.ocrText);
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      leading: const Icon(Icons.title),
-      title: Text(ocrText.value),
-      subtitle: Text(ocrText.language),
-      trailing: const Icon(Icons.arrow_forward),
-      onTap: () => Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (context) => OcrTextDetail(ocrText),
-        ),
-      ),
     );
   }
 }

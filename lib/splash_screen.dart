@@ -13,6 +13,9 @@ import 'package:csv/csv.dart';
 // For downloading the spreadsheet
 import 'package:http/http.dart' as http;
 
+// For fuzzy search and string similarity for OCR autocorrect
+import 'package:woozy_search/woozy_search.dart';
+
 // The main app
 import 'main.dart';
 
@@ -27,13 +30,11 @@ class SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-
     _loadValues();
   }
 
   void _loadValues() async {
     List<List<dynamic>> values;
-    var loaded = false;
     //final dir = await getApplicationDocumentsDirectory();
     final dir = await getExternalStorageDirectory();
     File file = new File('${dir.path}/values.csv');
@@ -48,11 +49,12 @@ class SplashScreenState extends State<SplashScreen> {
 
         // Nie dotykać tego
         const API_KEY = 'AIzaSyC75LXD5ArCCWeP1_ptj-d_O0QtEng6Mr0';
-        const FILE_ID = '18o5ksqpHFfbiUEbZeR1aR4qwwf9de2Y7GxPaMqWLkoY';
+        const FILE_ID = '1rYHaldH_ioyVDEwUJGyhutpMIU6VzyCECUIX9wAr9u4';
+
         var url =
             'https://docs.google.com/spreadsheets/export?id=$FILE_ID&key=$API_KEY&exportFormat=csv';
         var response = await http.get(url);
-        // 200 to http status code dla "OK"
+        // 200 as in HTTP's "OK"
         if (response.statusCode == 200) {
           var string = convert.utf8.decode(response.bodyBytes);
           values = const CsvToListConverter().convert(string);
@@ -60,7 +62,6 @@ class SplashScreenState extends State<SplashScreen> {
           values.removeAt(0);
           file.writeAsString(ListToCsvConverter().convert(values));
           print('File found and downloaded');
-          loaded = true;
         } else {
           print('Request failed with status: ${response.statusCode}.');
         }
@@ -70,20 +71,37 @@ class SplashScreenState extends State<SplashScreen> {
       print('ex: $ex');
     }
 
-    if (!loaded) {
-      if (await file.exists()) {
-        // If we already downloaded a file, open it
-        values = const CsvToListConverter().convert(await file.readAsString());
-      } else {
-        values = const CsvToListConverter()
-            .convert(await rootBundle.loadString('assets/values.csv'));
-      }
-    }
+    final woozy = _setupAutocorrect(values);
 
     //Create the home screen
-    Navigator.of(context).pushReplacement(MaterialPageRoute(
-        // TODO: Wymyśleć nazwę (albo usunąć pasek tytułu)
-        builder: (context) => HackatonHome(title: "Zdrowie the aplikacja")));
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+          builder: (context) => HackatonHome(
+              title: "Zdrowie the aplikacja",
+              args: MainAppArguments(values, woozy)),
+          settings: RouteSettings(arguments: MainAppArguments(values, woozy))),
+    );
+  }
+
+  Woozy<String> _setupAutocorrect(List<List<dynamic>> values) {
+    var woozy = Woozy<String>(caseSensitive: false, limit: 5);
+    print('adding entries');
+    for (final row in values) {
+      //woozy.addEntry(row[1], value: row[3]);
+      // Nazwa (e + numer)
+      woozy.addEntry(row[1]);
+      // Nazwa potoczna (tylko jeżeli to jedno słowo)
+      if (row[2].split(' ').length == 1) {
+        woozy.addEntry(row[2]);
+      }
+      // Additional autocorrect
+      if (row[5] != null) {
+        woozy.addEntry(row[5]);
+      }
+    }
+    print('done adding entries');
+    return woozy;
   }
 
   // UI Splash screenu
@@ -118,4 +136,11 @@ class SplashScreenState extends State<SplashScreen> {
       ),
     );
   }
+}
+
+class MainAppArguments {
+  final List<List<dynamic>> values;
+  final Woozy<String> dictionary;
+
+  MainAppArguments(this.values, this.dictionary);
 }
