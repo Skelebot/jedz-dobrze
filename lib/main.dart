@@ -6,6 +6,8 @@ import 'select_screen.dart';
 // image picker
 import 'package:image_picker_gallery_camera/image_picker_gallery_camera.dart';
 
+
+
 import 'dart:io';
 
 // Robie jebany performance
@@ -82,7 +84,7 @@ class HackatonHomeState extends State<HackatonHome> {
     );
 
     // create select_screen if image was picked
-    if(pickedImage != null){
+    if (pickedImage != null) {
       Navigator.of(context).pushReplacement(MaterialPageRoute(
           builder: (context) =>
               SelectScreen(Image.file(File(pickedImage.path)))));
