@@ -74,26 +74,34 @@ class SelectScreenState extends State<SelectScreen> {
   // TODO: make it look nice
   @override
   Widget build(BuildContext context) {
-    // this is copied into the DrawingOverlay
-    Widget imageBody = Center(
-        child: Column(children: <Widget>[
-      _image,
-    ]));
-
-    return Stack(
-      children: [
-        Scaffold(
-          body: Screenshot(
-              controller: _orgScreenshotController, child: imageBody),
+    return Scaffold(
+      appBar: AppBar(title: Text("Zdrowie the aplikacja")),
+      body: Center(
+        child: Column(
+          children: [
+            SizedBox(
+                height: 500,
+                child: Stack(
+                  children: [
+                    Screenshot(
+                      controller: _orgScreenshotController,
+                      child: Center(child: _image),
+                    ),
+                    Screenshot(
+                      controller: _orgScreenshotController,
+                      child: DrawingOverlay(Center(child: _image)),
+                    ),
+                  ],
+                )),
+            ElevatedButton(onPressed: _saveSelectedArea, child: Text("Save")),
+            ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: Text("Back"))
+          ],
         ),
-        Screenshot(
-            controller: _ovrlScreenshotController,
-            child: DrawingOverlay(imageBody)),
-        FlatButton(
-          onPressed: _saveSelectedArea,
-          child: Text("debug save selected area"),
-        )
-      ],
+      ),
     );
   }
 }
@@ -158,7 +166,7 @@ class DrawingPainter extends CustomPainter {
   List<Offset> _drawOffsets;
 
   // size of the drawn circle
-  final double _brushSize = 30;
+  final double brushSize = 20;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -169,7 +177,7 @@ class DrawingPainter extends CustomPainter {
 
     // draw every circle in drawOffsets
     for (int i = 0; i < _drawOffsets.length; i++) {
-      canvas.drawCircle(_drawOffsets[i], _brushSize, paint);
+      canvas.drawCircle(_drawOffsets[i], brushSize, paint);
     }
   }
 

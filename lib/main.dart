@@ -1,9 +1,10 @@
 import 'dart:convert';
 import 'dart:io';
+//import 'dart:js' as js;
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:path/path.dart';
+import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 
 import 'dart:async';
@@ -18,11 +19,8 @@ import 'select_screen.dart';
 // image picker
 import 'package:image_picker_gallery_camera/image_picker_gallery_camera.dart';
 
-
-
 import 'dart:io';
 
-// Robie jebany performance
 void main() => runApp(MyApp());
 
 class MyApp extends StatelessWidget {
@@ -35,11 +33,9 @@ class MyApp extends StatelessWidget {
         brightness: Brightness.dark,
         accentColor: const Color(0xfffac800),
         primaryColor: const Color(0xfffac800),
-        // Używamy tego jako koloru tekstu bo nie ogarniam o co chodzi z kolorami we flutterze
         cursorColor: const Color(0xfffcfcfc),
         fontFamily: 'Roboto',
         primarySwatch: Colors.amber,
-        // TODO: Wymienić tą czcionkę jak komuś zależy
         textTheme: Typography.whiteHelsinki,
       ),
       // Odpal SplashScreen
@@ -71,6 +67,8 @@ class HackatonHomeState extends State<HackatonHome> {
   String _extractedText;
   final MainAppArguments arguments;
 
+  Image _image;
+
   HackatonHomeState(this.arguments);
 
   @override
@@ -85,7 +83,7 @@ class HackatonHomeState extends State<HackatonHome> {
 
     try {
       final Directory directory = await getTemporaryDirectory();
-      final String imagePath = join(
+      final String imagePath = path.join(
         directory.path,
         "tmp_1.jpg",
       );
@@ -161,7 +159,7 @@ class HackatonHomeState extends State<HackatonHome> {
     setState(() {
       _extractedText = extractedText; // + '\n' + extractedTextGrayscale;
     });
-  Image _image;
+  }
 
   void _scanImage(ImgSource source) async {
     // get image from source (gallery, camera or both)
@@ -191,13 +189,12 @@ class HackatonHomeState extends State<HackatonHome> {
 
     // create select_screen if image was picked
     if (pickedImage != null) {
-      Navigator.of(context).pushReplacement(MaterialPageRoute(
+      Navigator.of(context).push(MaterialPageRoute(
           builder: (context) =>
               SelectScreen(Image.file(File(pickedImage.path)))));
     }
   }
 
-  @override
   Widget build(BuildContext context) {
     // This method is rerun every time setState is called, for instance as done
     // by the _incrementCounter method above.
