@@ -25,7 +25,10 @@ dependencies:
   path_provider: any
   csv: any
   image_picker_gallery_camera: any
-  flutter_colorpicker: any
+  screenshot: any
+  image_gallery_saver: any
+  image: any 
+  
 
   simple_ocr_plugin: 0.1.1
   woozy_search: ^2.0.0

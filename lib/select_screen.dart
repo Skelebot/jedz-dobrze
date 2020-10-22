@@ -1,71 +1,134 @@
 import 'package:flutter/material.dart';
-import 'dart:ui';
+
+import 'dart:ui' as ui;
+import 'dart:io';
+import 'dart:typed_data';
+
+import 'package:image/image.dart' as img;
+import 'package:screenshot/screenshot.dart';
+import 'package:path_provider/path_provider.dart';
 
 class SelectScreen extends StatefulWidget {
-  SelectScreen(this.image);
+  SelectScreen(this._image);
 
   // image to select from
-  final Image image;
+  final Image _image;
 
   @override
-  State<StatefulWidget> createState() => SelectScreenState(image);
+  State<StatefulWidget> createState() => SelectScreenState(_image);
 }
 
 class SelectScreenState extends State<SelectScreen> {
-  SelectScreenState(this.image);
+  SelectScreenState(this._image);
+
+  // screenshot controllers for the original image and the one you draw over
+  final ScreenshotController _orgScreenshotController = ScreenshotController();
+  final ScreenshotController _ovrlScreenshotController = ScreenshotController();
 
   // image to select from
-  Image image;
+  Image _image;
+
+  void _saveSelectedArea() async {
+    // take a 'screenshot' of the two imageBodies
+    var orgUiImage = await _orgScreenshotController.captureAsUiImage();
+    var ovrlUiImage = await _ovrlScreenshotController.captureAsUiImage();
+
+    // convert ui.Image to img.Image
+    var orgImage = await _uiImageToImage(orgUiImage);
+    var ovrlImage = await _uiImageToImage(ovrlUiImage);
+
+    // iterate through every pixel
+    var selectImage = img.Image(orgImage.width, orgImage.height);
+    for (int x = 0; x < orgImage.width; x++) {
+      for (int y = 0; y < orgImage.height; y++) {
+        // if overlay the same as original, set to white
+        if (orgImage.getPixel(x, y) == ovrlImage.getPixel(x, y)) {
+          selectImage.setPixelRgba(x, y, 255, 255, 255, 255);
+        }
+        // if changed (drawn over), set to original pixel
+        else {
+          selectImage.setPixel(x, y, orgImage.getPixel(x, y));
+        }
+      }
+    }
+
+    // save the image to tempPath/select_img.rgba (currently img is saved as raw rgba #TODO: antek musisz wymiary jeszcze wziac z tego)
+    String tempPath = (await getTemporaryDirectory()).path;
+    File file = File('$tempPath/select_img.rgba');
+    await file.writeAsBytes(selectImage.data.buffer.asUint8List(
+        selectImage.data.offsetInBytes, selectImage.data.lengthInBytes));
+  }
+
+  Future<img.Image> _uiImageToImage(ui.Image uiImage) async {
+    // convert ui.Image to img.Image
+
+    ByteData imageByteData =
+        await uiImage.toByteData(format: ui.ImageByteFormat.rawRgba);
+    Uint8List uiImageBytes = imageByteData.buffer.asUint8List();
+
+    return img.Image.fromBytes(uiImage.width, uiImage.height, uiImageBytes,
+        format: img.Format.rgba);
+  }
 
   // TODO: add text & reset/send buttons
+  // TODO: make it look nice
   @override
   Widget build(BuildContext context) {
     // this is copied into the DrawingOverlay
     Widget imageBody = Center(
         child: Column(children: <Widget>[
-      image,
+      _image,
     ]));
 
     return Stack(
       children: [
         Scaffold(
-          body: imageBody,
+          body: Screenshot(
+              controller: _orgScreenshotController, child: imageBody),
         ),
-        DrawingOverlay(imageBody),
+        Screenshot(
+            controller: _ovrlScreenshotController,
+            child: DrawingOverlay(imageBody)),
+        FlatButton(
+          onPressed: _saveSelectedArea,
+          child: Text("debug save selected area"),
+        )
       ],
     );
   }
 }
 
 class DrawingOverlay extends StatefulWidget {
-  DrawingOverlay(this.imageBody);
+  DrawingOverlay(this._imageBody);
 
-  final Widget imageBody;
+  final Widget _imageBody;
   @override
-  State<StatefulWidget> createState() => DrawingOverlayState(imageBody);
+  State<StatefulWidget> createState() => DrawingOverlayState(_imageBody);
 }
 
-// TODO: add getting image from canvas
 class DrawingOverlayState extends State<DrawingOverlay> {
-  DrawingOverlayState(this.imageBody);
+  DrawingOverlayState(this._imageBody);
 
-  final Widget imageBody;
+  final Widget _imageBody;
 
-  List<Offset> touchedPoints = [];
+  // every touched point (really bad way to do this but i dont care)
+  List<Offset> _touchedPoints = [];
 
   void onPanDown(BuildContext context, DragDownDetails details) {
     final RenderBox box = context.findRenderObject();
     final Offset localOffset = box.globalToLocal(details.globalPosition);
+    // update DrawPainter with the touched coords
     setState(() {
-      touchedPoints.add(localOffset);
+      _touchedPoints.add(localOffset);
     });
   }
 
   void onPanUpdate(BuildContext context, DragUpdateDetails details) {
     final RenderBox box = context.findRenderObject();
     final Offset localOffset = box.globalToLocal(details.globalPosition);
+    // update DrawPainter with the touched coords
     setState(() {
-      touchedPoints.add(localOffset);
+      _touchedPoints.add(localOffset);
     });
   }
 
@@ -79,22 +142,23 @@ class DrawingOverlayState extends State<DrawingOverlay> {
               onPanUpdate: (DragUpdateDetails details) =>
                   onPanUpdate(context, details),
               child: CustomPaint(
-                foregroundPainter: DrawPainter(touchedPoints),
+                foregroundPainter: DrawingPainter(_touchedPoints),
                 isComplex: true,
                 willChange: true,
-                child: imageBody,
+                child: _imageBody,
               ))),
     );
   }
 }
 
-class DrawPainter extends CustomPainter {
-  DrawPainter(this.drawOffsets);
+class DrawingPainter extends CustomPainter {
+  DrawingPainter(this._drawOffsets);
 
-  List<Offset> drawOffsets;
+  // every coord to draw a circle on (really bad way to do this but i dont care)
+  List<Offset> _drawOffsets;
 
   // size of the drawn circle
-  final double brushSize = 30;
+  final double _brushSize = 30;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -104,8 +168,8 @@ class DrawPainter extends CustomPainter {
       ..isAntiAlias = true;
 
     // draw every circle in drawOffsets
-    for (int i = 0; i < drawOffsets.length; i++) {
-      canvas.drawCircle(drawOffsets[i], brushSize, paint);
+    for (int i = 0; i < _drawOffsets.length; i++) {
+      canvas.drawCircle(_drawOffsets[i], _brushSize, paint);
     }
   }
 
