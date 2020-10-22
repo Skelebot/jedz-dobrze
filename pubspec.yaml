@@ -26,7 +26,6 @@ dependencies:
   csv: any
   image_picker_gallery_camera: any
   screenshot: any
-  image_gallery_saver: any
 
   simple_ocr_plugin: 0.1.1
   woozy_search: ^2.0.0

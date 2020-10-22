@@ -22,7 +22,7 @@ class SelectScreenState extends State<SelectScreen> {
   SelectScreenState(this._image);
 
   // screenshot controllers for the original image and the one you draw over
-  final ScreenshotController _orgScreenshotController = ScreenshotController();
+  final ScreenshotController _initScreenshotController = ScreenshotController();
   final ScreenshotController _ovrlScreenshotController = ScreenshotController();
 
   // image to select from
@@ -30,35 +30,36 @@ class SelectScreenState extends State<SelectScreen> {
 
   void _saveSelectedArea() async {
     // take a 'screenshot' of the two imageBodies
-    var orgUiImage =
-        await _orgScreenshotController.captureAsUiImage(pixelRatio: 1);
+    var initUiImage =
+        await _initScreenshotController.captureAsUiImage(pixelRatio: 1);
     var ovrlUiImage =
         await _ovrlScreenshotController.captureAsUiImage(pixelRatio: 1);
 
     // convert ui.Image to img.Image
-    var orgImage = await _uiImageToImage(orgUiImage);
+    var initImage = await _uiImageToImage(initUiImage);
     var ovrlImage = await _uiImageToImage(ovrlUiImage);
 
     // iterate through every pixel
-    var selectImage = img.Image(orgImage.width, orgImage.height);
-    for (int x = 0; x < orgImage.width; x++) {
-      for (int y = 0; y < orgImage.height; y++) {
+    var selectImage = img.Image(initImage.width, initImage.height);
+    for (int x = 0; x < initImage.width; x++) {
+      for (int y = 0; y < initImage.height; y++) {
         // if overlay the same as original, set to white
-        if (orgImage.getPixel(x, y) == ovrlImage.getPixel(x, y)) {
-          selectImage.setPixelRgba(x, y, 255, 255, 255, 255);
+        if (initImage.getPixel(x, y) == (ovrlImage.getPixel(x, y))) {
+          selectImage.setPixelRgba(x, y, 0xff, 0xff, 0xff);
         }
         // if changed (drawn over), set to original pixel
         else {
-          selectImage.setPixel(x, y, orgImage.getPixel(x, y));
+          selectImage.setPixel(x, y, initImage.getPixel(x, y));
         }
       }
     }
 
-    // save the image to tempPath/select_img.rgba (currently img is saved as raw rgba #TODO: antek musisz wymiary jeszcze wziac z tego)
+    var selectImageBytesPng = img.encodePng(selectImage);
+
+    // save the image to tempPath/select_img.png
     String tempPath = (await getTemporaryDirectory()).path;
-    File file = File('$tempPath/select_img.rgba');
-    await file.writeAsBytes(selectImage.data.buffer.asUint8List(
-        selectImage.data.offsetInBytes, selectImage.data.lengthInBytes));
+    File file = File('$tempPath/select_img.png');
+    await file.writeAsBytes(selectImageBytesPng);
   }
 
   Future<img.Image> _uiImageToImage(ui.Image uiImage) async {
@@ -72,29 +73,33 @@ class SelectScreenState extends State<SelectScreen> {
         format: img.Format.rgba);
   }
 
-  // TODO: add text & reset/send buttons
-  // TODO: make it look nice
+  // TODO: add text & reset button
+  // TODO: add loading visualisation when loading image
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text("Zdrowie the aplikacja")),
       body: Center(
         child: Column(
-          mainAxisSize: MainAxisSize.max,
+          mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            SizedBox(
-                height: 500,
+            Flexible(
+                fit: FlexFit.tight,
                 child: Stack(
                   children: [
+                    // initial image
                     Screenshot(
-                      controller: _orgScreenshotController,
+                      controller: _initScreenshotController,
                       child: Center(child: _image),
                     ),
-                    Screenshot(
-                      controller: _orgScreenshotController,
-                      child: DrawingOverlay(Center(child: _image)),
-                    ),
+                    //overlay
+                    Opacity(
+                        opacity: 0.8,
+                        child: Screenshot(
+                          controller: _ovrlScreenshotController,
+                          child: DrawingOverlay(Center(child: _image)),
+                        )),
                   ],
                 )),
             ElevatedButton(onPressed: _saveSelectedArea, child: Text("Save")),
@@ -123,7 +128,7 @@ class DrawingOverlayState extends State<DrawingOverlay> {
 
   final Widget _imageBody;
 
-  // every touched point (really bad way to do this but i dont care)
+  // every touched point (a wonky way to do this but i dont care)
   List<Offset> _touchedPoints = [];
 
   void onPanDown(BuildContext context, DragDownDetails details) {
@@ -145,28 +150,24 @@ class DrawingOverlayState extends State<DrawingOverlay> {
   }
 
   Widget build(BuildContext context) {
-    return Opacity(
-      opacity: 0.5,
-      child: Scaffold(
-          body: GestureDetector(
-              onPanDown: (DragDownDetails details) =>
-                  onPanDown(context, details),
-              onPanUpdate: (DragUpdateDetails details) =>
-                  onPanUpdate(context, details),
-              child: CustomPaint(
-                foregroundPainter: DrawingPainter(_touchedPoints),
-                isComplex: true,
-                willChange: true,
-                child: _imageBody,
-              ))),
-    );
+    return Scaffold(
+        body: GestureDetector(
+            onPanDown: (DragDownDetails details) => onPanDown(context, details),
+            onPanUpdate: (DragUpdateDetails details) =>
+                onPanUpdate(context, details),
+            child: CustomPaint(
+              foregroundPainter: DrawingPainter(_touchedPoints),
+              isComplex: true,
+              willChange: true,
+              child: _imageBody,
+            )));
   }
 }
 
 class DrawingPainter extends CustomPainter {
   DrawingPainter(this._drawOffsets);
 
-  // every coord to draw a circle on (really bad way to do this but i dont care)
+  // every coord to draw a circle on (a wonky way to do this but i dont care)
   List<Offset> _drawOffsets;
 
   // size of the drawn circle
