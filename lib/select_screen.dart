@@ -30,8 +30,10 @@ class SelectScreenState extends State<SelectScreen> {
 
   void _saveSelectedArea() async {
     // take a 'screenshot' of the two imageBodies
-    var orgUiImage = await _orgScreenshotController.captureAsUiImage();
-    var ovrlUiImage = await _ovrlScreenshotController.captureAsUiImage();
+    var orgUiImage =
+        await _orgScreenshotController.captureAsUiImage(pixelRatio: 1);
+    var ovrlUiImage =
+        await _ovrlScreenshotController.captureAsUiImage(pixelRatio: 1);
 
     // convert ui.Image to img.Image
     var orgImage = await _uiImageToImage(orgUiImage);
@@ -78,6 +80,8 @@ class SelectScreenState extends State<SelectScreen> {
       appBar: AppBar(title: Text("Zdrowie the aplikacja")),
       body: Center(
         child: Column(
+          mainAxisSize: MainAxisSize.max,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             SizedBox(
                 height: 500,
