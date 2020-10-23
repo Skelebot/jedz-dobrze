@@ -17,7 +17,7 @@ import 'package:http/http.dart' as http;
 import 'package:woozy_search/woozy_search.dart';
 
 // The main app
-import 'home_screen.dart';
+import 'home.dart';
 
 class SplashScreen extends StatefulWidget {
   @override

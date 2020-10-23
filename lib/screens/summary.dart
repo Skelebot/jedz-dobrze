@@ -2,8 +2,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:jedzdobrze/util/extract_ingredients.dart';
 
-import 'splash_screen.dart';
-import 'select_screen.dart';
+import 'splash.dart';
+import 'select.dart';
 
 // image picker
 import 'package:image_picker_gallery_camera/image_picker_gallery_camera.dart';

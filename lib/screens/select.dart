@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:jedzdobrze/screens/splash_screen.dart';
-import 'package:jedzdobrze/screens/summary_screen.dart';
+import 'package:jedzdobrze/screens/splash.dart';
+import 'package:jedzdobrze/screens/summary.dart';
 
 import 'dart:ui' as ui;
 import 'dart:io';

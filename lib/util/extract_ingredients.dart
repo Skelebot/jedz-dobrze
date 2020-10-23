@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 
-import 'package:jedzdobrze/screens/splash_screen.dart';
+import 'package:jedzdobrze/screens/splash.dart';
 
 import 'package:path/path.dart' as path;
 
