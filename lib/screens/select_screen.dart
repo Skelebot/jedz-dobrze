@@ -14,11 +14,12 @@ import 'dart:async';
 import 'package:flutter/services.dart';
 
 class SelectScreen extends StatefulWidget {
-  SelectScreen(this._image, this.data);
-
   // image to select from
   final Image _image;
   final SpreadsheetData data;
+
+  // constructor
+  SelectScreen(this._image, this.data);
 
   @override
   State<StatefulWidget> createState() => SelectScreenState(_image, data);
@@ -30,11 +31,24 @@ class SelectScreenState extends State<SelectScreen> {
   // data
   final SpreadsheetData data;
 
+  // constructor
   SelectScreenState(this._image, this.data);
 
   // screenshot controllers for the original image and the one you draw over
   final ScreenshotController _initScreenshotController = ScreenshotController();
   final ScreenshotController _ovrlScreenshotController = ScreenshotController();
+
+  DrawingOverlay drawingOverlay;
+
+  @override
+  void initState() {
+    super.initState();
+    drawingOverlay = DrawingOverlay(Center(child: _image));
+  }
+
+  void _resetDrawingOverlay() {
+    drawingOverlay.resetState();
+  }
 
   void _saveAndExtractIngredients() async {
     // take a 'screenshot' of the two imageBodies
@@ -109,7 +123,7 @@ class SelectScreenState extends State<SelectScreen> {
                         opacity: 0.8,
                         child: Screenshot(
                           controller: _ovrlScreenshotController,
-                          child: DrawingOverlay(Center(child: _image)),
+                          child: drawingOverlay,
                         )),
                   ],
                 )),
@@ -117,10 +131,7 @@ class SelectScreenState extends State<SelectScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 ElevatedButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                    child: Text("Wróć")),
+                    onPressed: _resetDrawingOverlay, child: Text("Resetuj")),
                 ElevatedButton(
                     onPressed: _saveAndExtractIngredients,
                     child: Text("Potwierdź")),
@@ -137,19 +148,28 @@ class DrawingOverlay extends StatefulWidget {
   DrawingOverlay(this._imageBody);
 
   final Widget _imageBody;
+
+  final DrawingOverlayState state = DrawingOverlayState();
+
+  void resetState() {
+    state.reset();
+  }
+
   @override
-  State<StatefulWidget> createState() => DrawingOverlayState(_imageBody);
+  State<StatefulWidget> createState() => state;
 }
 
 class DrawingOverlayState extends State<DrawingOverlay> {
-  DrawingOverlayState(this._imageBody);
-
-  final Widget _imageBody;
-
   // every touched point (a wonky way to do this but i dont care)
   List<Offset> _touchedPoints = [];
 
-  void onPanDown(BuildContext context, DragDownDetails details) {
+  void reset() {
+    setState(() {
+      _touchedPoints = [];
+    });
+  }
+
+  void _onPanDown(BuildContext context, DragDownDetails details) {
     final RenderBox box = context.findRenderObject();
     final Offset localOffset = box.globalToLocal(details.globalPosition);
     // update DrawPainter with the touched coords
@@ -158,7 +178,7 @@ class DrawingOverlayState extends State<DrawingOverlay> {
     });
   }
 
-  void onPanUpdate(BuildContext context, DragUpdateDetails details) {
+  void _onPanUpdate(BuildContext context, DragUpdateDetails details) {
     final RenderBox box = context.findRenderObject();
     final Offset localOffset = box.globalToLocal(details.globalPosition);
     // update DrawPainter with the touched coords
@@ -170,14 +190,15 @@ class DrawingOverlayState extends State<DrawingOverlay> {
   Widget build(BuildContext context) {
     return Scaffold(
         body: GestureDetector(
-            onPanDown: (DragDownDetails details) => onPanDown(context, details),
+            onPanDown: (DragDownDetails details) =>
+                _onPanDown(context, details),
             onPanUpdate: (DragUpdateDetails details) =>
-                onPanUpdate(context, details),
+                _onPanUpdate(context, details),
             child: CustomPaint(
               foregroundPainter: DrawingPainter(_touchedPoints),
               isComplex: true,
               willChange: true,
-              child: _imageBody,
+              child: widget._imageBody,
             )));
   }
 }
@@ -189,7 +210,7 @@ class DrawingPainter extends CustomPainter {
   List<Offset> _drawOffsets;
 
   // size of the drawn circle
-  final double brushSize = 10;
+  final double brushSize = 15;
 
   @override
   void paint(Canvas canvas, Size size) {
