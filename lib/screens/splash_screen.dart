@@ -94,8 +94,8 @@ class SplashScreenState extends State<SplashScreen> {
       // Każde słowo z nazwy potocznej
       woozy.addEntries(row[2].split(' '));
       // Nazwa potoczna z podłogami zamiast spacji
-      String nazwa_potoczna_sub = row[2].toString().replaceAll(' ', '_');
-      woozy.addEntry(nazwa_potoczna_sub);
+      String nazwaPotocznaSub = row[2].toString().replaceAll(' ', '_');
+      woozy.addEntry(nazwaPotocznaSub);
       // Additional autocorrect
       if (row[5] != null) {
         woozy.addEntry(row[5]);

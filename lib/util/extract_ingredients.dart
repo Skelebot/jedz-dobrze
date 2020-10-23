@@ -41,23 +41,39 @@ Future<List<String>> extractIngredients(
   regexp = RegExp(r'(w tym)|[\n\(\)\.]', caseSensitive: false);
   extractedText = extractedText.replaceAll(regexp, ',');
   // Fix up spaced E additions
-  regexp = RegExp(r'e (?=\d\d\d)', caseSensitive: false);
+  regexp = RegExp(r'e +(?=\d\d\d)', caseSensitive: false);
   extractedText = extractedText.replaceAll(regexp, 'e');
   // Remove any percentages
   regexp = RegExp(r'((,|\d)+%)', caseSensitive: false);
   extractedText = extractedText.replaceAll(regexp, '');
+  // Fix groups of three numbers without an "e" before them
+  regexp = RegExp(r'(?<!\d)\d\d\d(?!\d)', caseSensitive: false);
+  extractedText = extractedText.replaceAllMapped(regexp, (match) {
+    return 'e${match.group(0)}';
+  });
   // Replace weird misunderstandings
   var repl = {
+    r'\d\d\d\d+': '',
+    r'(?<=(olej)) *roslinny': '',
+    r'(?<=(olej)) *zwierzecy': '',
     r'(\|)': 'l',
-    r'stadniki': '',
+    r' +': ' ',
     r'skladniki': '',
+    r'stadniki': '',
+    r'tadniki': '',
+    r'kladniki': '',
+    r'aromat:': '',
+    r'kwas:': '',
+    r'barwnik:': '',
+    r'produkt': '',
+    r'moze': '',
+    r'zawierac': '',
     r'(?<!,)( *)dwutlenek': ',dwutlenek',
     r'(?<!,)( *)kwas': ',kwas',
     r'(?<!,)( *)aromat': ',aromat',
     r'(?<!,)( *)aromaty': ',aromaty',
-    r'aromat:': '',
-    r'kwas:': '',
-    r'barwnik:': '',
+    r'^\d$': '',
+    r'\d{1,2}': '',
   };
   for (var pair in repl.entries) {
     regexp = RegExp(pair.key, caseSensitive: false);
@@ -77,7 +93,7 @@ Future<List<String>> extractIngredients(
     var search = words.join('_').trim();
     final output = data.dictionary.search(search);
     print(search + ": " + output[0].toString());
-    if (output[0].score > 0.8) {
+    if (output[0].score > 0.6) {
       // If we found exactly the thing we were looking for, return it without doing
       // any more corrections
       return output[0].text.replaceAll('_', ' ');
@@ -85,13 +101,14 @@ Future<List<String>> extractIngredients(
     words = words.map((word) {
       // Autocorrect single words using fuzzy matching and levenshtein distance
       final output = data.dictionary.search(word);
-      if (output[0].score > 0.8) {
-        //if (output[0].text.split(' ').length == 1) {
-        //  // If we are nearly sure this is the word, return the corrected version,
-        //  // but only if the corrected word is a single word
-        //  return output[0].text;
-        //}
-        return output[0].text;
+      if (output[0].score > 0.75) {
+        if (output[0].text.split(' ').length == 1) {
+          // If we are nearly sure this is the word, return the corrected version,
+          // but only if the corrected word is a single word
+          return output[0].text;
+        } else {
+          return word;
+        }
       } else {
         // Give up
         return word;
