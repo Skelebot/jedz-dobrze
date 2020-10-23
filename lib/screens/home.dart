@@ -23,20 +23,50 @@ class HackatonHome extends StatefulWidget {
   final SpreadsheetData data;
 
   @override
-  HackatonHomeState createState() => HackatonHomeState(data);
+  HackatonHomeState createState() => HackatonHomeState();
 }
 
 class HackatonHomeState extends State<HackatonHome> {
-  final SpreadsheetData data;
+  final minQueryScore = 0.5;
 
-  HackatonHomeState(this.data);
+  String inputText;
+
+  // TODO: maybe add an option to scroll through the whole list?
 
   @override
   void initState() {
     super.initState();
   }
 
-  void _scanImage(ImgSource source) async {
+  // TODO: add decent-looking showing of searched data
+  void _onSearchPress() {
+    // search with the query typed into the TextField
+    var queryResponse = widget.data.dictionary.search(inputText);
+
+    // filter the response using the minQueryScore value
+    var filteredResponse = [];
+    for (var entry in queryResponse) {
+      if (entry.score >= minQueryScore) {
+        filteredResponse.add(entry);
+      }
+    }
+    
+    print(filteredResponse);
+  }
+
+  void _onScanPress() async {
+    // TODO: add a prompt saying the images should be quality?
+    var pickedImage = await _scanImage(ImgSource.Both);
+
+    // create select_screen if image was picked
+    if (pickedImage != null) {
+      Navigator.of(context).push(MaterialPageRoute(
+          builder: (context) =>
+              SelectScreen(Image.file(File(pickedImage.path)), widget.data)));
+    }
+  }
+
+  Future<dynamic> _scanImage(ImgSource source) async {
     // get image from source (gallery, camera or both)
     var pickedImage = await ImagePickerGC.pickImage(
       context: context,
@@ -56,14 +86,10 @@ class HackatonHomeState extends State<HackatonHome> {
       ),
     );
 
-    // create select_screen if image was picked
-    if (pickedImage != null) {
-      Navigator.of(context).push(MaterialPageRoute(
-          builder: (context) =>
-              SelectScreen(Image.file(File(pickedImage.path)), data)));
-    }
+    return pickedImage;
   }
 
+  // TODO: make the thing look nicer (move the buttons?)
   Widget build(BuildContext context) {
     // This method is rerun every time setState is called, for instance as done
     // by the _incrementCounter method above.
@@ -84,9 +110,23 @@ class HackatonHomeState extends State<HackatonHome> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             TextField(
+              onChanged: (value) => inputText = value,
               decoration: InputDecoration(
-                  labelText: 'Wyszukaj', hintText: 'Podaj nazwę składnika'),
-            )
+                  labelText: 'Szukaj po nazwie',
+                  hintText: 'Podaj nazwę składnika'),
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                FlatButton(
+                  onPressed: _onSearchPress,
+                  child: Text('WYSZUKAJ',
+                      style: Theme.of(context).textTheme.button),
+                  shape: StadiumBorder(),
+                  color: Theme.of(context).buttonColor,
+                )
+              ],
+            ),
           ],
         ),
       ),
@@ -95,7 +135,7 @@ class HackatonHomeState extends State<HackatonHome> {
       floatingActionButton: Padding(
           padding: const EdgeInsets.only(bottom: 24),
           child: FloatingActionButton.extended(
-            onPressed: () => _scanImage(ImgSource.Both),
+            onPressed: () => _onScanPress(),
             tooltip: 'Skanuj',
             elevation: 3.0,
             icon: Icon(Icons.camera, color: Theme.of(context).cursorColor),

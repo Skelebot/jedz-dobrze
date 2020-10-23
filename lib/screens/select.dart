@@ -46,11 +46,28 @@ class SelectScreenState extends State<SelectScreen> {
     drawingOverlay = DrawingOverlay(Center(child: _image));
   }
 
-  void _resetDrawingOverlay() {
+  void _onResetPress() {
     drawingOverlay.resetState();
   }
 
-  void _saveAndExtractIngredients() async {
+  void _onSavePress() async {
+    img.Image selectImage = await _cutUnselectedArea();
+
+    List<int> selectImageBytesPng = img.encodePng(selectImage);
+
+    // save the image to tempPath/select_img.png
+    String tempPath = (await getTemporaryDirectory()).path;
+    File file = File('$tempPath/select_img.png');
+    await file.writeAsBytes(selectImageBytesPng);
+
+    String resultPath = '$tempPath/select_img.png';
+
+    Navigator.of(context).push(MaterialPageRoute(
+        builder: (context) => SummaryScreen(resultPath, data)));
+  }
+
+  /// Returns the original image with the unselected bits cut out
+  Future<img.Image> _cutUnselectedArea() async {
     // take a 'screenshot' of the two imageBodies
     ui.Image initUiImage =
         await _initScreenshotController.captureAsUiImage(pixelRatio: 1);
@@ -76,17 +93,7 @@ class SelectScreenState extends State<SelectScreen> {
       }
     }
 
-    List<int> selectImageBytesPng = img.encodePng(selectImage);
-
-    // save the image to tempPath/select_img.png
-    String tempPath = (await getTemporaryDirectory()).path;
-    File file = File('$tempPath/select_img.png');
-    await file.writeAsBytes(selectImageBytesPng);
-
-    String resultPath = '$tempPath/select_img.png';
-
-    Navigator.of(context).push(MaterialPageRoute(
-        builder: (context) => SummaryScreen(resultPath, data)));
+    return selectImage;
   }
 
   /// Converts ui.Image to img.Image
@@ -131,10 +138,9 @@ class SelectScreenState extends State<SelectScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 ElevatedButton(
-                    onPressed: _resetDrawingOverlay, child: Text("Resetuj")),
+                    onPressed: _onResetPress, child: Text("Resetuj")),
                 ElevatedButton(
-                    onPressed: _saveAndExtractIngredients,
-                    child: Text("Potwierdź")),
+                    onPressed: _onSavePress, child: Text("Potwierdź")),
               ],
             )
           ],
@@ -220,8 +226,8 @@ class DrawingPainter extends CustomPainter {
       ..isAntiAlias = true;
 
     // draw every circle in drawOffsets
-    for (int i = 0; i < _drawOffsets.length; i++) {
-      canvas.drawCircle(_drawOffsets[i], brushSize, paint);
+    for (var offset in _drawOffsets) {
+      canvas.drawCircle(offset, brushSize, paint);
     }
   }
 
