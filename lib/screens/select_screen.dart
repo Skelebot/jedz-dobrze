@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:jedzdobrze/screens/splash_screen.dart';
+import 'package:jedzdobrze/screens/summary_screen.dart';
 
 import 'dart:ui' as ui;
 import 'dart:io';
@@ -8,27 +10,33 @@ import 'package:image/image.dart' as img;
 import 'package:screenshot/screenshot.dart';
 import 'package:path_provider/path_provider.dart';
 
+import 'dart:async';
+import 'package:flutter/services.dart';
+
 class SelectScreen extends StatefulWidget {
-  SelectScreen(this._image);
+  SelectScreen(this._image, this.data);
 
   // image to select from
   final Image _image;
+  final SpreadsheetData data;
 
   @override
-  State<StatefulWidget> createState() => SelectScreenState(_image);
+  State<StatefulWidget> createState() => SelectScreenState(_image, data);
 }
 
 class SelectScreenState extends State<SelectScreen> {
-  SelectScreenState(this._image);
+  // image to select from
+  final Image _image;
+  // data
+  final SpreadsheetData data;
+
+  SelectScreenState(this._image, this.data);
 
   // screenshot controllers for the original image and the one you draw over
   final ScreenshotController _initScreenshotController = ScreenshotController();
   final ScreenshotController _ovrlScreenshotController = ScreenshotController();
 
-  // image to select from
-  Image _image;
-
-  void _saveSelectedArea() async {
+  void _saveAndExtractIngredients() async {
     // take a 'screenshot' of the two imageBodies
     ui.Image initUiImage =
         await _initScreenshotController.captureAsUiImage(pixelRatio: 1);
@@ -60,11 +68,15 @@ class SelectScreenState extends State<SelectScreen> {
     String tempPath = (await getTemporaryDirectory()).path;
     File file = File('$tempPath/select_img.png');
     await file.writeAsBytes(selectImageBytesPng);
+
+    String resultPath = '$tempPath/select_img.png';
+
+    Navigator.of(context).push(MaterialPageRoute(
+        builder: (context) => SummaryScreen(resultPath, data)));
   }
 
+  /// Converts ui.Image to img.Image
   Future<img.Image> _uiImageToImage(ui.Image uiImage) async {
-    // convert ui.Image to img.Image
-
     ByteData imageByteData =
         await uiImage.toByteData(format: ui.ImageByteFormat.rawRgba);
     Uint8List uiImageBytes = imageByteData.buffer.asUint8List();
@@ -73,12 +85,11 @@ class SelectScreenState extends State<SelectScreen> {
         format: img.Format.rgba);
   }
 
-  // TODO: add text & reset button
   // TODO: add loading visualisation when loading image
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Zdrowie the aplikacja")),
+      appBar: AppBar(title: Text('Zaznacz składniki')),
       body: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -102,13 +113,19 @@ class SelectScreenState extends State<SelectScreen> {
                         )),
                   ],
                 )),
-            ElevatedButton(
-                onPressed: _saveSelectedArea, child: Text("Potwierdź")),
-            ElevatedButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-                child: Text("Wróć"))
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    child: Text("Wróć")),
+                ElevatedButton(
+                    onPressed: _saveAndExtractIngredients,
+                    child: Text("Potwierdź")),
+              ],
+            )
           ],
         ),
       ),
@@ -172,7 +189,7 @@ class DrawingPainter extends CustomPainter {
   List<Offset> _drawOffsets;
 
   // size of the drawn circle
-  final double brushSize = 20;
+  final double brushSize = 10;
 
   @override
   void paint(Canvas canvas, Size size) {

@@ -1,5 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.hackaton">
+    package="com.example.jedzdobrze">
 
     <!-- io.flutter.app.FlutterApplication is an android.app.Application that
          calls FlutterMain.startInitialization(this); in its onCreate method.
@@ -9,7 +9,7 @@
         <uses-feature android:name="android.hardware.camera" />
         <uses-permission android:name="android.permission.CAMERA" />
     <application
-        android:label="hackaton"
+        android:label="Jedz Dobrze"
         android:icon="@mipmap/ic_launcher">
         <meta-data
             android:name="flutterEmbedding"

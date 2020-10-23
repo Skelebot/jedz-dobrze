@@ -42,7 +42,7 @@ class SplashScreenState extends State<SplashScreen> {
     // Check for internet connection
     try {
       final result = await InternetAddress.lookup('example.com')
-          .timeout(Duration(seconds: 3));
+          .timeout(Duration(seconds: 2));
       if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
         // Connected
         print('connected');
@@ -79,8 +79,8 @@ class SplashScreenState extends State<SplashScreen> {
       MaterialPageRoute(
           builder: (context) => HackatonHome(
               title: "Zdrowie the aplikacja",
-              args: MainAppArguments(values, woozy)),
-          settings: RouteSettings(arguments: MainAppArguments(values, woozy))),
+              data: SpreadsheetData(values, woozy)),
+          settings: RouteSettings(arguments: SpreadsheetData(values, woozy))),
     );
   }
 
@@ -91,10 +91,11 @@ class SplashScreenState extends State<SplashScreen> {
       //woozy.addEntry(row[1], value: row[3]);
       // Nazwa (e + numer)
       woozy.addEntry(row[1]);
-      // Nazwa potoczna (tylko jeżeli to jedno słowo)
-      if (row[2].split(' ').length == 1) {
-        woozy.addEntry(row[2]);
-      }
+      // Każde słowo z nazwy potocznej
+      woozy.addEntries(row[2].split(' '));
+      // Nazwa potoczna z podłogami zamiast spacji
+      String nazwa_potoczna_sub = row[2].toString().replaceAll(' ', '_');
+      woozy.addEntry(nazwa_potoczna_sub);
       // Additional autocorrect
       if (row[5] != null) {
         woozy.addEntry(row[5]);
@@ -124,7 +125,7 @@ class SplashScreenState extends State<SplashScreen> {
               ),
               Padding(
                   padding: EdgeInsets.all(15.0),
-                  // Kręcące się w nieskończoność kółko
+                  // Infinitely spinning circle
                   child: CircularProgressIndicator(
                     valueColor: AlwaysStoppedAnimation<Color>(
                         Theme.of(context).accentColor),
@@ -138,9 +139,9 @@ class SplashScreenState extends State<SplashScreen> {
   }
 }
 
-class MainAppArguments {
+class SpreadsheetData {
   final List<List<dynamic>> values;
   final Woozy<String> dictionary;
 
-  MainAppArguments(this.values, this.dictionary);
+  SpreadsheetData(this.values, this.dictionary);
 }

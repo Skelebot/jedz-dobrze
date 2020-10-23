@@ -1,5 +1,5 @@
-name: hackaton
-description: A new Flutter project.
+name: jedzdobrze
+description: Aplikacja Jedz Dobrze
 
 # The following defines the version and build number for your application.
 # A version number is three numbers separated by dots, like 1.2.43
@@ -39,13 +39,14 @@ dependencies:
   cupertino_icons: ^0.1.2
 
 dev_dependencies:
+  flutter_launcher_icons: "^0.8.1"
   flutter_test:
     sdk: flutter
 
 flutter_icons:
   android: true
   ios: false
-  image_path: "assets/icon/icon_round.png"
+  image_path: "assets/icon/icon.png"
   adaptive_icon_background: #222222
 
 # For information on the generic Dart part of this file, see the
@@ -61,6 +62,7 @@ flutter:
     - assets/test/primgles.jpg
     - assets/test/czekolada.jpg
     - assets/
+
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
