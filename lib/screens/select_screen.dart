@@ -30,17 +30,17 @@ class SelectScreenState extends State<SelectScreen> {
 
   void _saveSelectedArea() async {
     // take a 'screenshot' of the two imageBodies
-    var initUiImage =
+    ui.Image initUiImage =
         await _initScreenshotController.captureAsUiImage(pixelRatio: 1);
-    var ovrlUiImage =
+    ui.Image ovrlUiImage =
         await _ovrlScreenshotController.captureAsUiImage(pixelRatio: 1);
 
     // convert ui.Image to img.Image
-    var initImage = await _uiImageToImage(initUiImage);
-    var ovrlImage = await _uiImageToImage(ovrlUiImage);
+    img.Image initImage = await _uiImageToImage(initUiImage);
+    img.Image ovrlImage = await _uiImageToImage(ovrlUiImage);
 
     // iterate through every pixel
-    var selectImage = img.Image(initImage.width, initImage.height);
+    img.Image selectImage = img.Image(initImage.width, initImage.height);
     for (int x = 0; x < initImage.width; x++) {
       for (int y = 0; y < initImage.height; y++) {
         // if overlay the same as original, set to white
@@ -54,7 +54,7 @@ class SelectScreenState extends State<SelectScreen> {
       }
     }
 
-    var selectImageBytesPng = img.encodePng(selectImage);
+    List<int> selectImageBytesPng = img.encodePng(selectImage);
 
     // save the image to tempPath/select_img.png
     String tempPath = (await getTemporaryDirectory()).path;
@@ -102,12 +102,13 @@ class SelectScreenState extends State<SelectScreen> {
                         )),
                   ],
                 )),
-            ElevatedButton(onPressed: _saveSelectedArea, child: Text("Save")),
+            ElevatedButton(
+                onPressed: _saveSelectedArea, child: Text("Potwierdź")),
             ElevatedButton(
                 onPressed: () {
                   Navigator.of(context).pop();
                 },
-                child: Text("Back"))
+                child: Text("Wróć"))
           ],
         ),
       ),
@@ -175,7 +176,7 @@ class DrawingPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    var paint = Paint()
+    Paint paint = Paint()
       ..color = Color(0xffffffff).withOpacity(1.0)
       ..style = PaintingStyle.fill
       ..isAntiAlias = true;
