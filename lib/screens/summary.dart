@@ -27,7 +27,7 @@ class SummaryScreenState extends State<SummaryScreen> {
 
   SummaryScreenState(this.resultImagePath, this.data);
 
-  Future<Table> ingredientTable;
+  Future<Widget> ingredientTable;
 
   @override
   void initState() {
@@ -56,18 +56,17 @@ class SummaryScreenState extends State<SummaryScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
-                SingleChildScrollView(
-                  child: FutureBuilder(
-                      future: ingredientTable,
-                      builder: (context, snapshot) {
-                        if (snapshot.hasData) {
-                          return snapshot.data;
-                        } else if (snapshot.hasError) {
-                          return snapshot.error;
-                        }
-                        return CircularProgressIndicator();
-                      }),
-                ),
+                FutureBuilder(
+                    future: ingredientTable,
+                    builder: (context, snapshot) {
+                      if (snapshot.hasData) {
+                        return snapshot.data;
+                      } else if (snapshot.hasError) {
+                        print(snapshot.error);
+                        return snapshot.error;
+                      }
+                      return CircularProgressIndicator();
+                    }),
                 ElevatedButton(
                     onPressed: () {
                       // Pop screens until we arrive back at the main screen

@@ -119,7 +119,7 @@ Future<List<String>> extractIngredients(
   return ingredients;
 }
 
-Future<Table> createIngredientTable(
+Future<Widget> createIngredientTable(
     SpreadsheetData data, String imagePath) async {
   List<String> ingredients = await extractIngredients(data, imagePath);
   print("Extracted ingredients: " + ingredients.toString());
@@ -176,33 +176,88 @@ Future<Table> createIngredientTable(
     ]);
   }
 
-  return Table(
-      border:
-          TableBorder.all(style: BorderStyle.solid, color: Color(0xffdddddd)),
-      children: [
-        TableRow(children: [
-          TableCell(
-            child: Padding(
-                padding: EdgeInsets.all(10.0),
-                child: Text("Nazwa",
-                    textScaleFactor: 1.5,
-                    style: TextStyle(fontWeight: FontWeight.bold))),
-          ),
-          TableCell(
-            child: Padding(
-                padding: EdgeInsets.all(10.0),
-                child: Text("Opis",
-                    textScaleFactor: 1.5,
-                    style: TextStyle(fontWeight: FontWeight.bold))),
-          ),
-          TableCell(
-            child: Padding(
-                padding: EdgeInsets.all(10.0),
-                child: Text("Ocena",
-                    textScaleFactor: 1.5,
-                    style: TextStyle(fontWeight: FontWeight.bold))),
-          ),
-        ]),
-        ...rows
-      ]);
+  // Calculate a mark for the whole product
+  double dangerLevel = 0;
+  for (final mark in marks) {
+    switch (mark) {
+      case "Nieszkodliwy":
+        dangerLevel += 0.0;
+        break;
+      case "Nieszkodliwy (alergen)":
+        dangerLevel += 0.1;
+        break;
+      case "Zalecana ostrożność":
+        dangerLevel += 0.5;
+        break;
+      case "Podejrzany":
+        dangerLevel += 1.0;
+        break;
+      case "Niebezpieczny":
+        dangerLevel += 2.0;
+        break;
+    }
+  }
+
+  String productMark;
+  if (dangerLevel < 1.5) {
+    productMark = "Bardzo zdrowy";
+  } else if (dangerLevel < 3.0) {
+    productMark = "Zdrowy";
+  } else if (dangerLevel < 4.0) {
+    productMark = "Lekko niezdrowy";
+  } else if (dangerLevel < 6.5) {
+    productMark = "Niezdrowy";
+  } else {
+    productMark = "Bardzo niezdrowy";
+  }
+
+  return Column(
+    children: [
+      SingleChildScrollView(
+          child: Table(
+              border: TableBorder.all(
+                  style: BorderStyle.solid, color: Color(0xffdddddd)),
+              children: [
+            TableRow(children: [
+              TableCell(
+                child: Padding(
+                    padding: EdgeInsets.all(10.0),
+                    child: Text("Nazwa",
+                        textScaleFactor: 1.5,
+                        style: TextStyle(fontWeight: FontWeight.bold))),
+              ),
+              TableCell(
+                child: Padding(
+                    padding: EdgeInsets.all(10.0),
+                    child: Text("Opis",
+                        textScaleFactor: 1.5,
+                        style: TextStyle(fontWeight: FontWeight.bold))),
+              ),
+              TableCell(
+                child: Padding(
+                    padding: EdgeInsets.all(10.0),
+                    child: Text("Ocena",
+                        textScaleFactor: 1.5,
+                        style: TextStyle(fontWeight: FontWeight.bold))),
+              ),
+            ]),
+            // All the rows
+            ...rows,
+          ])),
+      Padding(
+          padding: EdgeInsets.all(10.0),
+          child: Center(
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+            Text(
+              "Ocena produkutu: ",
+              textScaleFactor: 1.6,
+            ),
+            Text(
+              productMark,
+              textScaleFactor: 1.8,
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ])))
+    ],
+  );
 }
