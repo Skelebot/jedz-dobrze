@@ -10,7 +10,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Hackaton Zdrowie',
+      title: 'Jedz Dobrze',
       theme: ThemeData(
         brightness: Brightness.dark,
         accentColor: const Color(0xfffac800),

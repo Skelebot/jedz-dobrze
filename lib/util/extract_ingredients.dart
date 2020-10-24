@@ -1,21 +1,12 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 
-import 'package:jedzdobrze/screens/splash.dart';
-
-import 'package:path/path.dart' as path;
+import 'dart:convert';
+import 'dart:async';
 
 import 'package:simple_ocr_plugin/simple_ocr_plugin.dart';
 import 'package:diacritic/diacritic.dart';
-import 'package:path_provider/path_provider.dart';
 
-import 'dart:io';
-import 'dart:typed_data';
-
-import 'package:image/image.dart' as img;
-
-import 'dart:async';
-import 'package:flutter/services.dart';
+import 'package:jedzdobrze/screens/splash.dart';
 
 Future<List<String>> extractIngredients(
     SpreadsheetData data, String imgPath) async {
@@ -57,11 +48,14 @@ Future<List<String>> extractIngredients(
     r'(?<=(olej)) *roslinny': '',
     r'(?<=(olej)) *zwierzecy': '',
     r'(\|)': 'l',
+    'naturaline': 'naturalne',
+    '  ': ',',
     r' +': ' ',
     r'skladniki': '',
     r'stadniki': '',
     r'tadniki': '',
     r'kladniki': '',
+    r'skfadniki': '',
     r'aromat:': '',
     r'kwas:': '',
     r'barwnik:': '',
@@ -75,6 +69,7 @@ Future<List<String>> extractIngredients(
     r'^\d$': '',
     r'\d{1,2}': '',
   };
+
   for (var pair in repl.entries) {
     regexp = RegExp(pair.key, caseSensitive: false);
     extractedText = extractedText.replaceAll(regexp, pair.value);
@@ -93,7 +88,7 @@ Future<List<String>> extractIngredients(
     var search = words.join('_').trim();
     final output = data.dictionary.search(search);
     print(search + ": " + output[0].toString());
-    if (output[0].score > 0.6) {
+    if (output[0].score > 0.65) {
       // If we found exactly the thing we were looking for, return it without doing
       // any more corrections
       return output[0].text.replaceAll('_', ' ');
@@ -101,7 +96,7 @@ Future<List<String>> extractIngredients(
     words = words.map((word) {
       // Autocorrect single words using fuzzy matching and levenshtein distance
       final output = data.dictionary.search(word);
-      if (output[0].score > 0.75) {
+      if (output[0].score > 0.65) {
         if (output[0].text.split(' ').length == 1) {
           // If we are nearly sure this is the word, return the corrected version,
           // but only if the corrected word is a single word
@@ -132,19 +127,31 @@ Future<Table> createIngredientTable(
   // Remove empty ingredients
   ingredients.retainWhere((element) => element.trim() != '');
 
+  List<String> names = List(ingredients.length);
+  List<String> long_names = List(ingredients.length);
   List<String> marks = List(ingredients.length);
 
   for (var i = 0; i < ingredients.length; i++) {
     var ingredient = ingredients[i];
-    var index = data.values.indexWhere((item) {
-      return item[1] == ingredient || item[2] == ingredient;
+    var nameIndex = data.values.indexWhere((item) {
+      return item[1] == ingredient;
     });
-    if (index == -1) {
+    var longNameIndex = data.values.indexWhere((item) {
+      return item[2] == ingredient;
+    });
+    if (nameIndex == -1 && longNameIndex == -1) {
+      names[i] = ingredient;
       marks[i] = "Nie znaleziono";
+      long_names[i] = "-";
+    } else if (nameIndex == -1) {
+      marks[i] = data.values[longNameIndex][3];
+      names[i] = data.values[longNameIndex][1];
+      long_names[i] = ingredient;
     } else {
-      marks[i] = data.values[index][3];
+      marks[i] = data.values[nameIndex][3];
+      names[i] = ingredient;
+      long_names[i] = data.values[nameIndex][2];
     }
-    print(marks[i]);
   }
 
   print("marks collected");
@@ -152,21 +159,50 @@ Future<Table> createIngredientTable(
   List<TableRow> rows = List(ingredients.length);
 
   for (var i = 0; i < ingredients.length; i++) {
-    var ingredient = ingredients[i];
+    // Capitalize the name
+    var name = "${names[i][0].toUpperCase()}${names[i].substring(1)}";
+    var longName = long_names[i];
     var mark = marks[i];
-    print(ingredient);
-    print(mark);
     rows[i] = TableRow(children: [
+      // Name
       TableCell(
-          child:
-              Padding(padding: EdgeInsets.all(10.0), child: Text(ingredient))),
+          child: Padding(padding: EdgeInsets.all(10.0), child: Text(name))),
+      // Lomg name
+      TableCell(
+          child: Padding(padding: EdgeInsets.all(10.0), child: Text(longName))),
+      // Mark
       TableCell(
           child: Padding(padding: EdgeInsets.all(10.0), child: Text(mark))),
     ]);
   }
 
   return Table(
-    border: TableBorder.all(style: BorderStyle.solid, color: Color(0xffdddddd)),
-    children: rows,
-  );
+      border:
+          TableBorder.all(style: BorderStyle.solid, color: Color(0xffdddddd)),
+      children: [
+        TableRow(children: [
+          TableCell(
+            child: Padding(
+                padding: EdgeInsets.all(10.0),
+                child: Text("Nazwa",
+                    textScaleFactor: 1.5,
+                    style: TextStyle(fontWeight: FontWeight.bold))),
+          ),
+          TableCell(
+            child: Padding(
+                padding: EdgeInsets.all(10.0),
+                child: Text("Opis",
+                    textScaleFactor: 1.5,
+                    style: TextStyle(fontWeight: FontWeight.bold))),
+          ),
+          TableCell(
+            child: Padding(
+                padding: EdgeInsets.all(10.0),
+                child: Text("Ocena",
+                    textScaleFactor: 1.5,
+                    style: TextStyle(fontWeight: FontWeight.bold))),
+          ),
+        ]),
+        ...rows
+      ]);
 }

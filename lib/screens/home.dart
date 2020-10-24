@@ -1,5 +1,6 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
+
+import 'dart:io';
 
 import 'splash.dart';
 import 'select.dart';
@@ -50,7 +51,7 @@ class HackatonHomeState extends State<HackatonHome> {
         filteredResponse.add(entry);
       }
     }
-    
+
     print(filteredResponse);
   }
 

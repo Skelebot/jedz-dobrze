@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:jedzdobrze/screens/splash.dart';
-import 'package:jedzdobrze/screens/summary.dart';
 
 import 'dart:ui' as ui;
 import 'dart:io';
 import 'dart:typed_data';
+import 'dart:async';
 
 import 'package:image/image.dart' as img;
 import 'package:screenshot/screenshot.dart';
 import 'package:path_provider/path_provider.dart';
 
-import 'dart:async';
 import 'package:flutter/services.dart';
+
+import 'splash.dart';
+import 'summary.dart';
 
 class SelectScreen extends StatefulWidget {
   // image to select from

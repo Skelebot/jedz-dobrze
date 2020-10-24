@@ -1,12 +1,14 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:jedzdobrze/util/extract_ingredients.dart';
+
+import 'dart:io';
+
+// image picker
+import 'package:image_picker_gallery_camera/image_picker_gallery_camera.dart';
 
 import 'splash.dart';
 import 'select.dart';
 
-// image picker
-import 'package:image_picker_gallery_camera/image_picker_gallery_camera.dart';
+import 'package:jedzdobrze/util/extract_ingredients.dart';
 
 class SummaryScreen extends StatefulWidget {
   SummaryScreen(this.resultImagePath, this.data);
@@ -54,21 +56,24 @@ class SummaryScreenState extends State<SummaryScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
-                FutureBuilder(
-                    future: ingredientTable,
-                    builder: (context, snapshot) {
-                      if (snapshot.hasData) {
-                        return snapshot.data;
-                      } else if (snapshot.hasError) {
-                        return snapshot.error;
-                      }
-                      return CircularProgressIndicator();
-                    }),
+                SingleChildScrollView(
+                  child: FutureBuilder(
+                      future: ingredientTable,
+                      builder: (context, snapshot) {
+                        if (snapshot.hasData) {
+                          return snapshot.data;
+                        } else if (snapshot.hasError) {
+                          return snapshot.error;
+                        }
+                        return CircularProgressIndicator();
+                      }),
+                ),
                 ElevatedButton(
                     onPressed: () {
+                      // Pop screens until we arrive back at the main screen
                       Navigator.popUntil(context, (route) => route.isFirst);
                     },
-                    child: Row(children: [
+                    child: Row(mainAxisSize: MainAxisSize.min, children: [
                       Icon(Icons.arrow_back),
                       Text('Wróć do początku'),
                     ])),
