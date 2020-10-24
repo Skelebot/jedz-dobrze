@@ -156,14 +156,19 @@ Future<Widget> createIngredientTable(
 
   print("marks collected");
 
-  List<TableRow> rows = List(ingredients.length);
+  List<TableRow> rows = List();
 
   for (var i = 0; i < ingredients.length; i++) {
     // Capitalize the name
     var name = "${names[i][0].toUpperCase()}${names[i].substring(1)}";
     var longName = long_names[i];
     var mark = marks[i];
-    rows[i] = TableRow(children: [
+    if (mark == "Nie znaleziono") {
+      // Do not generate a row if the item hasn't been found
+      // comment this if you want those items to show up
+      continue;
+    }
+    rows.add(TableRow(children: [
       // Name
       TableCell(
           child: Padding(padding: EdgeInsets.all(10.0), child: Text(name))),
@@ -173,8 +178,11 @@ Future<Widget> createIngredientTable(
       // Mark
       TableCell(
           child: Padding(padding: EdgeInsets.all(10.0), child: Text(mark))),
-    ]);
+    ]));
   }
+
+  // remove null rows
+  rows.retainWhere((element) => element != null);
 
   // Calculate a mark for the whole product
   double dangerLevel = 0;
