@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.com/Skelebot/hackaton.svg?token=jVjt5dHumaDUboMqZmdt&branch=master)](https://travis-ci.com/Skelebot/hackaton)
 
-Aplikacja mobilna zbudowana za pomocą frameworku (Google Flutter)[https://flutter.dev/]
+Aplikacja mobilna zbudowana za pomocą frameworku [Google Flutter](https://flutter.dev/)
 na hackaton **Hack Heroes *2020***
 
 ## Autorzy
