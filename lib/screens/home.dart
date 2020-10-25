@@ -5,6 +5,7 @@ import 'dart:io';
 import 'splash.dart';
 import 'select.dart';
 
+import 'package:woozy_search/woozy_search.dart' as woozy;
 // image picker
 import 'package:image_picker_gallery_camera/image_picker_gallery_camera.dart';
 
@@ -51,6 +52,8 @@ class HackatonHomeState extends State<HackatonHome> {
         filteredResponse.add(entry);
       }
     }
+    var ob = filteredResponse[0];
+    widget.data.values.indexOf(filteredResponse[0]);
 
     print(filteredResponse);
   }
@@ -63,7 +66,7 @@ class HackatonHomeState extends State<HackatonHome> {
     if (pickedImage != null) {
       Navigator.of(context).push(MaterialPageRoute(
           builder: (context) =>
-              SelectScreen(Image.file(File(pickedImage.path)), widget.data)));
+              SelectScreen(File(pickedImage.path), widget.data)));
     }
   }
 

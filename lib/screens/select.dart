@@ -15,36 +15,35 @@ import 'splash.dart';
 import 'summary.dart';
 
 class SelectScreen extends StatefulWidget {
-  // image to select from
-  final Image _image;
+  // file containing the selected image
+  final File _imageFile;
   final SpreadsheetData data;
 
   // constructor
-  SelectScreen(this._image, this.data);
+  SelectScreen(this._imageFile, this.data);
 
   @override
-  State<StatefulWidget> createState() => SelectScreenState(_image, data);
+  State<StatefulWidget> createState() => SelectScreenState();
 }
 
 class SelectScreenState extends State<SelectScreen> {
-  // image to select from
-  final Image _image;
-  // data
-  final SpreadsheetData data;
-
-  // constructor
-  SelectScreenState(this._image, this.data);
-
   // screenshot controllers for the original image and the one you draw over
-  final ScreenshotController _initScreenshotController = ScreenshotController();
-  final ScreenshotController _ovrlScreenshotController = ScreenshotController();
+  final ScreenshotController _screenshotController = ScreenshotController();
 
+  // widget with the image from widget._imageFile
+  Image _imageWidget;
   DrawingOverlay drawingOverlay;
+
+  int _loading = 0;
+  String _progressLabel = '';
 
   @override
   void initState() {
     super.initState();
-    drawingOverlay = DrawingOverlay(Center(child: _image));
+    // initialize the imageWidget with the imageFile
+    _imageWidget = Image.file(widget._imageFile);
+    // initialize the drawingOverlay with the imageWidget
+    drawingOverlay = DrawingOverlay(_imageWidget, _screenshotController);
   }
 
   void _onResetPress() {
@@ -52,53 +51,84 @@ class SelectScreenState extends State<SelectScreen> {
   }
 
   void _onSavePress() async {
-    img.Image selectImage = await _cutUnselectedArea();
+    // update progress indicator
+    setState(() {
+      _loading = 1;
+      _progressLabel = "Przycinanie zdjęcia...";
+    });
+    print('cutting the image');
+    img.Image cutImageImage = await _cutUnselectedArea();
 
-    List<int> selectImageBytesPng = img.encodePng(selectImage);
+    // update progress indicator
+    setState(() {
+      _progressLabel = "Zapisywanie...";
+    });
+    await Future.delayed(const Duration(milliseconds: 50));
+    print('saving the image');
+
+    // FIXME: encoding and saving to file can be slow for larger photos
+    List<int> cutImageBytesPng = img.encodePng(cutImageImage);
 
     // save the image to tempPath/select_img.png
     String tempPath = (await getTemporaryDirectory()).path;
     File file = File('$tempPath/select_img.png');
-    await file.writeAsBytes(selectImageBytesPng);
+    await file.writeAsBytes(cutImageBytesPng);
 
     String resultPath = '$tempPath/select_img.png';
 
+    // reset progress indicator
+    setState(() {
+      _loading = 0;
+      _progressLabel = '';
+    });
     Navigator.of(context).push(MaterialPageRoute(
-        builder: (context) => SummaryScreen(resultPath, data)));
+        builder: (context) => SummaryScreen(resultPath, widget.data)));
   }
 
   /// Returns the original image with the unselected bits cut out
   Future<img.Image> _cutUnselectedArea() async {
-    // take a 'screenshot' of the two imageBodies
-    ui.Image initUiImage =
-        await _initScreenshotController.captureAsUiImage(pixelRatio: 1);
+    // initial image
+    Uint8List imageBytes = await widget._imageFile.readAsBytes();
+    ui.Image initiImage = await decodeImageFromList(imageBytes);
+    img.Image initImageImage = await _uiImageToImageImage(initiImage);
+    // here i'm scaling down the image if its getting to big
+    // FIXME: TEMPORARY SOLUTION CAUSE IT WAS TOO SLOW
+    if (initImageImage.width >= 3000 || initImageImage.height >= 3000) {
+      initImageImage = img.copyResize(initImageImage,
+          width: (initImageImage.width / 1.5).round(),
+          height: (initImageImage.height / 1.5).round());
+    }
+
+    // overlay image
     ui.Image ovrlUiImage =
-        await _ovrlScreenshotController.captureAsUiImage(pixelRatio: 1);
+        await _screenshotController.captureAsUiImage(pixelRatio: 1);
+    img.Image ovrlImageImage = await _uiImageToImageImage(ovrlUiImage);
+    ovrlImageImage = img.copyResize(ovrlImageImage,
+        width: initImageImage.width, height: initImageImage.height);
 
-    // convert ui.Image to img.Image
-    img.Image initImage = await _uiImageToImage(initUiImage);
-    img.Image ovrlImage = await _uiImageToImage(ovrlUiImage);
+    // cut image
+    img.Image cutImageImage =
+        img.Image(initImageImage.width, initImageImage.height);
 
-    // iterate through every pixel
-    img.Image selectImage = img.Image(initImage.width, initImage.height);
-    for (int x = 0; x < initImage.width; x++) {
-      for (int y = 0; y < initImage.height; y++) {
-        // if overlay the same as original, set to white
-        if (initImage.getPixel(x, y) == (ovrlImage.getPixel(x, y))) {
-          selectImage.setPixelRgba(x, y, 0xff, 0xff, 0xff);
+    // iterate through every pixel in the image
+    for (int x = 0; x < initImageImage.width; x++) {
+      for (int y = 0; y < initImageImage.height; y++) {
+        // if the overlay's pixel is white, set cutImage's pixel to initialImage's pixel
+        if (ovrlImageImage.getPixel(x, y) == 0xffffffff) {
+          cutImageImage.setPixel(x, y, initImageImage.getPixel(x, y));
         }
-        // if changed (drawn over), set to original pixel
+        // else just set the cut image's pixel as white
         else {
-          selectImage.setPixel(x, y, initImage.getPixel(x, y));
+          cutImageImage.setPixel(x, y, 0xffffffff);
         }
       }
     }
 
-    return selectImage;
+    return cutImageImage;
   }
 
   /// Converts ui.Image to img.Image
-  Future<img.Image> _uiImageToImage(ui.Image uiImage) async {
+  Future<img.Image> _uiImageToImageImage(ui.Image uiImage) async {
     ByteData imageByteData =
         await uiImage.toByteData(format: ui.ImageByteFormat.rawRgba);
     Uint8List uiImageBytes = imageByteData.buffer.asUint8List();
@@ -107,34 +137,37 @@ class SelectScreenState extends State<SelectScreen> {
         format: img.Format.rgba);
   }
 
-  // TODO: add loading visualisation when loading image
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text('Zaznacz składniki')),
       body: Center(
         child: Column(
-          mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            IndexedStack(index: _loading, children: [
+              Container(),
+              Center(
+                  child: Padding(
+                      padding: EdgeInsets.all(10.0),
+                      child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            CircularProgressIndicator(),
+                            Text(_progressLabel,
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                )),
+                          ]))),
+            ]),
+            // TODO: add a loading image indicator
             Flexible(
-                fit: FlexFit.tight,
-                child: Stack(
-                  children: [
-                    // initial image
-                    Screenshot(
-                      controller: _initScreenshotController,
-                      child: Center(child: _image),
-                    ),
-                    //overlay
-                    Opacity(
-                        opacity: 0.8,
-                        child: Screenshot(
-                          controller: _ovrlScreenshotController,
-                          child: drawingOverlay,
-                        )),
-                  ],
-                )),
+              fit: FlexFit.tight,
+              child: drawingOverlay,
+            ),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -152,9 +185,13 @@ class SelectScreenState extends State<SelectScreen> {
 }
 
 class DrawingOverlay extends StatefulWidget {
-  DrawingOverlay(this._imageBody);
+  DrawingOverlay(
+    this._image,
+    this.screenshotController,
+  );
 
-  final Widget _imageBody;
+  final Image _image;
+  final ScreenshotController screenshotController;
 
   final DrawingOverlayState state = DrawingOverlayState();
 
@@ -195,17 +232,17 @@ class DrawingOverlayState extends State<DrawingOverlay> {
   }
 
   Widget build(BuildContext context) {
-    return Scaffold(
-        body: GestureDetector(
-            onPanDown: (DragDownDetails details) =>
-                _onPanDown(context, details),
-            onPanUpdate: (DragUpdateDetails details) =>
-                _onPanUpdate(context, details),
+    return GestureDetector(
+        onPanDown: (DragDownDetails details) => _onPanDown(context, details),
+        onPanUpdate: (DragUpdateDetails details) =>
+            _onPanUpdate(context, details),
+        child: Screenshot(
+            controller: widget.screenshotController,
             child: CustomPaint(
               foregroundPainter: DrawingPainter(_touchedPoints),
               isComplex: true,
               willChange: true,
-              child: widget._imageBody,
+              child: widget._image,
             )));
   }
 }
@@ -217,7 +254,7 @@ class DrawingPainter extends CustomPainter {
   List<Offset> _drawOffsets;
 
   // size of the drawn circle
-  final double brushSize = 15;
+  final double brushSize = 25;
 
   @override
   void paint(Canvas canvas, Size size) {

@@ -6,9 +6,19 @@ import 'screens/splash.dart';
 void main() => runApp(MyApp());
 
 class MyApp extends StatelessWidget {
+  // the app can bug out in horizontal mode.
+  void _portraitModeOnly() {
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
+  }
+
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
+    _portraitModeOnly();
+
     return MaterialApp(
       title: 'Jedz Dobrze',
       theme: ThemeData(
@@ -20,7 +30,7 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.amber,
         textTheme: Typography.whiteHelsinki,
       ),
-      // Odpal SplashScreen
+      // run SplashScreen
       home: SplashScreen(),
     );
   }
