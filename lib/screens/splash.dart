@@ -98,7 +98,9 @@ class SplashScreenState extends State<SplashScreen> {
     for (final row in values) {
       //woozy.addEntry(row[1], value: row[3]);
       // Nazwa (e + numer)
-      woozy.addEntry(row[1]);
+      woozy.addEntries(row[1].split(' '));
+      String nazwaSub = row[1].toString().replaceAll(' ', '_');
+      woozy.addEntry(nazwaSub);
       // Każde słowo z nazwy potocznej
       woozy.addEntries(row[2].split(' '));
       // Nazwa potoczna z podłogami zamiast spacji
@@ -144,10 +146,7 @@ class SplashScreenState extends State<SplashScreen> {
               Padding(
                   padding: EdgeInsets.all(15.0),
                   // Infinitely spinning circle
-                  child: CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                        Theme.of(context).accentColor),
-                  )),
+                  child: CircularProgressIndicator()),
               Text('$_infoText'),
               //ElevatedButton(
               //    onPressed: null,

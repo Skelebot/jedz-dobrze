@@ -22,8 +22,6 @@ class HackatonHome extends StatefulWidget {
 }
 
 class HackatonHomeState extends State<HackatonHome> {
-  // TODO: maybe add an option to scroll through the whole list?
-
   void _onSearchPress() {
     Navigator.of(context).push(
         MaterialPageRoute(builder: (context) => SearchScreen(widget.data)));
@@ -69,7 +67,7 @@ class HackatonHomeState extends State<HackatonHome> {
         title: Text(widget.title),
         actions: <Widget>[
           IconButton(
-            icon: Image(image: AssetImage('assets/icon/icon.png')),
+            icon: Icon(Icons.home),
             onPressed: () => {},
           )
         ],
@@ -77,11 +75,13 @@ class HackatonHomeState extends State<HackatonHome> {
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          // TODO: add home page contents (like some text or something)
           children: <Widget>[
             Padding(
                 padding: EdgeInsets.all(15.0),
-                child: Image(image: AssetImage('assets/icon/icon.png'))),
+                child: Image(
+                  image: AssetImage('assets/logo.png'),
+                  height: 250,
+                )),
             Text(
               'Witaj w aplikacji\n Jedz Dobrze!',
               textAlign: TextAlign.center,
@@ -91,7 +91,7 @@ class HackatonHomeState extends State<HackatonHome> {
             Padding(
                 padding: EdgeInsets.all(15.0),
                 child: Text(
-                  'Zeskanuj skład produktu lub samemu wyszukaj jego składniki',
+                  'Zeskanuj skład produktu lub samemu wyszukaj składniki',
                   textAlign: TextAlign.center,
                   textScaleFactor: 1.5,
                 ))
@@ -111,10 +111,8 @@ class HackatonHomeState extends State<HackatonHome> {
                   onPressed: _onSearchPress,
                   tooltip: 'Wyszukaj',
                   elevation: 3.0,
-                  icon:
-                      Icon(Icons.search, color: Theme.of(context).cursorColor),
-                  label: Text('WYSZUKAJ',
-                      style: Theme.of(context).textTheme.button),
+                  icon: Icon(Icons.search),
+                  label: Text('WYSZUKAJ'),
                   backgroundColor: Theme.of(context).buttonColor,
                 ),
                 Spacer(),
@@ -123,10 +121,8 @@ class HackatonHomeState extends State<HackatonHome> {
                   onPressed: _onScanPress,
                   tooltip: 'Skanuj',
                   elevation: 3.0,
-                  icon:
-                      Icon(Icons.camera, color: Theme.of(context).cursorColor),
-                  label:
-                      Text('SKANUJ', style: Theme.of(context).textTheme.button),
+                  icon: Icon(Icons.camera),
+                  label: Text('SKANUJ'),
                   backgroundColor: Theme.of(context).buttonColor,
                 ),
               ]))),

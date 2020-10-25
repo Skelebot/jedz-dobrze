@@ -186,7 +186,7 @@ class SearchScreenState extends State<SearchScreen> {
         resizeToAvoidBottomInset: false,
         appBar: AppBar(title: Text("Wyszukaj składnik"), actions: <Widget>[
           IconButton(
-            icon: Image(image: AssetImage('assets/icon/icon.png')),
+            icon: Icon(Icons.home),
             onPressed: () => {
               // Pop screens until we arrive back at the main screen
               Navigator.popUntil(context, (route) => route.isFirst)

@@ -25,7 +25,6 @@ class MyApp extends StatelessWidget {
         brightness: Brightness.dark,
         accentColor: const Color(0xfffac800),
         primaryColor: const Color(0xfffac800),
-        cursorColor: const Color(0xfffcfcfc),
         fontFamily: 'Roboto',
         primarySwatch: Colors.amber,
         textTheme: Typography.whiteHelsinki,
