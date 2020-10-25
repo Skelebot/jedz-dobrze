@@ -7,6 +7,7 @@ import 'package:simple_ocr_plugin/simple_ocr_plugin.dart';
 import 'package:diacritic/diacritic.dart';
 
 import 'package:jedzdobrze/screens/splash.dart';
+import 'package:woozy_search/woozy_search.dart';
 
 Future<List<String>> extractIngredients(
     SpreadsheetData data, String imgPath) async {
@@ -49,7 +50,6 @@ Future<List<String>> extractIngredients(
     r'(?<=(olej)) *zwierzecy': '',
     r'(\|)': 'l',
     'naturaline': 'naturalne',
-    '  ': ',',
     r' +': ' ',
     r'skladniki': '',
     r'stadniki': '',
@@ -207,13 +207,13 @@ Future<Widget> createIngredientTable(
   }
 
   String productMark;
-  if (dangerLevel < 1.5) {
+  if (dangerLevel < 1.0) {
     productMark = "Bardzo zdrowy";
-  } else if (dangerLevel < 3.0) {
+  } else if (dangerLevel < 2.0) {
     productMark = "Zdrowy";
-  } else if (dangerLevel < 4.0) {
+  } else if (dangerLevel < 3.0) {
     productMark = "Lekko niezdrowy";
-  } else if (dangerLevel < 6.5) {
+  } else if (dangerLevel < 4.5) {
     productMark = "Niezdrowy";
   } else {
     productMark = "Bardzo niezdrowy";
