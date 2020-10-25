@@ -78,7 +78,24 @@ class HackatonHomeState extends State<HackatonHome> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           // TODO: add home page contents (like some text or something)
-          children: <Widget>[],
+          children: <Widget>[
+            Padding(
+                padding: EdgeInsets.all(15.0),
+                child: Image(image: AssetImage('assets/icon/icon.png'))),
+            Text(
+              'Witaj w aplikacji\n Jedz Dobrze!',
+              textAlign: TextAlign.center,
+              textScaleFactor: 2.5,
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            Padding(
+                padding: EdgeInsets.all(15.0),
+                child: Text(
+                  'Zeskanuj skład produktu lub samemu wyszukaj jego składniki',
+                  textAlign: TextAlign.center,
+                  textScaleFactor: 1.5,
+                ))
+          ],
         ),
       ),
       // ActionButton na środku
@@ -90,6 +107,18 @@ class HackatonHomeState extends State<HackatonHome> {
               child:
                   Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                 FloatingActionButton.extended(
+                  heroTag: "searchButton",
+                  onPressed: _onSearchPress,
+                  tooltip: 'Wyszukaj',
+                  elevation: 3.0,
+                  icon:
+                      Icon(Icons.search, color: Theme.of(context).cursorColor),
+                  label: Text('WYSZUKAJ',
+                      style: Theme.of(context).textTheme.button),
+                  backgroundColor: Theme.of(context).buttonColor,
+                ),
+                Spacer(),
+                FloatingActionButton.extended(
                   heroTag: "scanButton",
                   onPressed: _onScanPress,
                   tooltip: 'Skanuj',
@@ -100,18 +129,6 @@ class HackatonHomeState extends State<HackatonHome> {
                       Text('SKANUJ', style: Theme.of(context).textTheme.button),
                   backgroundColor: Theme.of(context).buttonColor,
                 ),
-                Spacer(),
-                FloatingActionButton.extended(
-                  heroTag: "searchButton",
-                  onPressed: _onSearchPress,
-                  tooltip: 'Wyszukaj',
-                  elevation: 3.0,
-                  icon:
-                      Icon(Icons.search, color: Theme.of(context).cursorColor),
-                  label: Text('WYSZUKAJ',
-                      style: Theme.of(context).textTheme.button),
-                  backgroundColor: Theme.of(context).buttonColor,
-                )
               ]))),
     );
   }

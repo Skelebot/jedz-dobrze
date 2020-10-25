@@ -19,7 +19,6 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  # TODO: Zastąpić to jakąś normalną wersją żeby nie było potem problemu jak wyjdą breaking changes
   http: any
   provider: any
   path_provider: any

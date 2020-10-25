@@ -36,7 +36,8 @@ class SelectScreenState extends State<SelectScreen> {
   DrawingOverlay drawingOverlay;
 
   // progress indicator stuff
-  int _loading = 0;
+  bool _isLoading = false;
+  int _loadingStackPos = 0;
   String _progressText = '';
 
   @override
@@ -47,6 +48,7 @@ class SelectScreenState extends State<SelectScreen> {
         loadStateChanged: (ExtendedImageState state) {
       switch (state.extendedImageLoadState) {
         case LoadState.loading:
+          _isLoading = true;
           return Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
@@ -60,6 +62,7 @@ class SelectScreenState extends State<SelectScreen> {
                     )),
               ]);
         default:
+          _isLoading = false;
           return null;
       }
     });
@@ -68,42 +71,50 @@ class SelectScreenState extends State<SelectScreen> {
   }
 
   void _onResetPress() {
-    drawingOverlay.resetState();
+    // check if is loading just in case
+    if (!_isLoading) {
+      drawingOverlay.resetState();
+    }
   }
 
   void _onSavePress() async {
-    // update progress indicator
-    setState(() {
-      _loading = 1;
-      _progressText = "Przycinanie zdjęcia...";
-    });
-    print('cutting the image');
-    img.Image cutImageImage = await _cutUnselectedArea();
+    // check if is loading just in case
+    if (!_isLoading) {
+      // update progress indicator
+      setState(() {
+        _isLoading = true;
+        _loadingStackPos = 1;
+        _progressText = "Przycinanie zdjęcia...";
+      });
+      print('cutting the image');
+      img.Image cutImageImage = await _cutUnselectedArea();
 
-    // update progress indicator
-    setState(() {
-      _progressText = "Zapisywanie...";
-    });
-    await Future.delayed(const Duration(milliseconds: 50));
-    print('saving the image');
+      // update progress indicator
+      setState(() {
+        _progressText = "Zapisywanie...";
+      });
+      await Future.delayed(const Duration(milliseconds: 50));
+      print('saving the image');
 
-    // FIXME: encoding and saving to file can be slow for larger photos
-    List<int> cutImageBytesPng = img.encodePng(cutImageImage);
+      // FIXME: encoding and saving to file can be slow for larger photos
+      List<int> cutImageBytesPng = img.encodePng(cutImageImage);
 
-    // save the image to tempPath/select_img.png
-    String tempPath = (await getTemporaryDirectory()).path;
-    File file = File('$tempPath/select_img.png');
-    await file.writeAsBytes(cutImageBytesPng);
+      // save the image to tempPath/select_img.png
+      String tempPath = (await getTemporaryDirectory()).path;
+      File file = File('$tempPath/select_img.png');
+      await file.writeAsBytes(cutImageBytesPng);
 
-    String resultPath = '$tempPath/select_img.png';
+      String resultPath = '$tempPath/select_img.png';
 
-    // reset progress indicator
-    setState(() {
-      _loading = 0;
-      _progressText = '';
-    });
-    Navigator.of(context).push(MaterialPageRoute(
-        builder: (context) => SummaryScreen(resultPath, widget.data)));
+      // reset progress indicator
+      setState(() {
+        _isLoading = false;
+        _loadingStackPos = 0;
+        _progressText = '';
+      });
+      Navigator.of(context).push(MaterialPageRoute(
+          builder: (context) => SummaryScreen(resultPath, widget.data)));
+    }
   }
 
   /// Returns the original image with the unselected bits cut out
@@ -178,13 +189,12 @@ class SelectScreenState extends State<SelectScreen> {
               Expanded(
                 child:
                     // actual image & canvas
-                    // TODO: add a loading image indicator
                     Stack(children: [
                   Center(
                       child: Expanded(
                     child: drawingOverlay,
                   )), // loading indicator
-                  IndexedStack(index: _loading, children: [
+                  IndexedStack(index: _loadingStackPos, children: [
                     Container(),
                     Center(
                         child: Padding(
@@ -221,15 +231,25 @@ class SelectScreenState extends State<SelectScreen> {
                 ]),
               ), // buttons
               Padding(
-                  padding: EdgeInsets.all(5.0),
+                  padding: EdgeInsets.all(15.0),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      ElevatedButton(
-                          onPressed: _onResetPress, child: Text("Resetuj")),
+                      RaisedButton(
+                          disabledColor: Color(0xfffac800).withOpacity(0.85),
+                          onPressed: _isLoading ? null : () => _onResetPress(),
+                          child: Text(
+                            "Resetuj",
+                            style: TextStyle(color: Colors.black),
+                          )),
                       Spacer(),
-                      ElevatedButton(
-                          onPressed: _onSavePress, child: Text("Potwierdź")),
+                      RaisedButton(
+                          disabledColor: Color(0xfffac800).withOpacity(0.85),
+                          onPressed: _isLoading ? null : () => _onSavePress(),
+                          child: Text(
+                            "Potwierdź",
+                            style: TextStyle(color: Colors.black),
+                          )),
                     ],
                   ))
             ]),
