@@ -19,6 +19,8 @@ class SearchScreenState extends State<SearchScreen> {
 
   final TextEditingController txtEditController = TextEditingController();
 
+  Widget _tableBody = Container();
+
   void _onClearPress() {
     txtEditController.clear();
   }
@@ -35,6 +37,8 @@ class SearchScreenState extends State<SearchScreen> {
     // search with the query typed into the TextField
     var queryResponse = widget.data.dictionary.search(query);
 
+    print('found: $queryResponse');
+
     // filter the response using the minQueryScore value
     var filteredResponse = [];
     for (var entry in queryResponse) {
@@ -43,51 +47,168 @@ class SearchScreenState extends State<SearchScreen> {
       }
     }
 
-    print(filteredResponse);
+    print('filtered: $filteredResponse');
+
+    List<String> ingredients = [];
+    for (var entry in filteredResponse) {
+      if (!ingredients.contains(entry.text.toLowerCase())) {
+        ingredients.add(entry.text.toLowerCase());
+      }
+    }
+
+    List<String> names = List(ingredients.length);
+    List<String> longNames = List(ingredients.length);
+    List<String> marks = List(ingredients.length);
+
+    for (var i = 0; i < ingredients.length; i++) {
+      var ingredient = ingredients[i];
+      var nameIndex = widget.data.values.indexWhere((item) {
+        return item[1] == ingredient;
+      });
+      var longNameIndex = widget.data.values.indexWhere((item) {
+        return item[2] == ingredient;
+      });
+      if (nameIndex == -1 && longNameIndex == -1) {
+        names[i] = ingredient;
+        marks[i] = "Nie znaleziono";
+        longNames[i] = "-";
+      } else if (nameIndex == -1) {
+        marks[i] = widget.data.values[longNameIndex][3];
+        names[i] = widget.data.values[longNameIndex][1];
+        longNames[i] = ingredient;
+      } else {
+        marks[i] = widget.data.values[nameIndex][3];
+        names[i] = ingredient;
+        longNames[i] = widget.data.values[nameIndex][2];
+      }
+    }
+
+    Widget table = _createTable(names, longNames, ingredients, marks);
+
+    setState(() {
+      _tableBody = table;
+    });
+  }
+
+  Widget _createTable(List<String> names, List<String> longNames,
+      List<String> ingredients, List<String> marks) {
+    List<TableRow> rows = List();
+
+    for (var i = 0; i < ingredients.length; i++) {
+      // Capitalize the name
+      var name = "${names[i][0].toUpperCase()}${names[i].substring(1)}";
+      var longName = longNames[i];
+      var mark = marks[i];
+      if (mark == "Nie znaleziono") {
+        // Do not generate a row if the item hasn't been found
+        // comment this if you want those items to show up
+        continue;
+      }
+      rows.add(TableRow(children: [
+        // Name
+        TableCell(
+            child: Padding(padding: EdgeInsets.all(10.0), child: Text(name))),
+        // Lomg name
+        TableCell(
+            child:
+                Padding(padding: EdgeInsets.all(10.0), child: Text(longName))),
+        // Mark
+        TableCell(
+            child: Padding(padding: EdgeInsets.all(10.0), child: Text(mark))),
+      ]));
+    }
+
+    // remove null rows
+    rows.retainWhere((element) => element != null);
+    if (rows.length > 0) {
+      return SingleChildScrollView(
+          child: Column(
+        children: [
+          Table(
+              border: TableBorder.all(
+                  style: BorderStyle.solid, color: Color(0xffdddddd)),
+              children: [
+                TableRow(children: [
+                  TableCell(
+                    child: Padding(
+                        padding: EdgeInsets.all(10.0),
+                        child: Text("Nazwa",
+                            textScaleFactor: 1.5,
+                            style: TextStyle(fontWeight: FontWeight.bold))),
+                  ),
+                  TableCell(
+                    child: Padding(
+                        padding: EdgeInsets.all(10.0),
+                        child: Text("Opis",
+                            textScaleFactor: 1.5,
+                            style: TextStyle(fontWeight: FontWeight.bold))),
+                  ),
+                  TableCell(
+                    child: Padding(
+                        padding: EdgeInsets.all(10.0),
+                        child: Text("Ocena",
+                            textScaleFactor: 1.5,
+                            style: TextStyle(fontWeight: FontWeight.bold))),
+                  ),
+                ]),
+                // All the rows
+                ...rows,
+              ]),
+        ],
+      ));
+    } else {
+      return Text(
+        "Nie znaleziono podobnych składników",
+        textAlign: TextAlign.center,
+        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 28),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Wyszukaj składnik")),
-      body: Column(
-        children: [
-          // text field
-          TextField(
-            onSubmitted: _onSubmit,
-            controller: txtEditController,
-            decoration: InputDecoration(
-                labelText: 'Wyszukaj po nazwie',
-                hintText: 'Podaj nazwę składnika'),
+        resizeToAvoidBottomInset: false,
+        appBar: AppBar(title: Text("Wyszukaj składnik")),
+        body: Padding(
+          padding: EdgeInsets.all(5.0),
+          child: Column(
+            children: [
+              // text field
+              TextField(
+                onSubmitted: _onSubmit,
+                controller: txtEditController,
+                decoration: InputDecoration(
+                    labelText: 'Wyszukaj po nazwie',
+                    hintText: 'Podaj nazwę składnika'),
+              ),
+              // buttons
+              Padding(
+                  padding: EdgeInsets.all(15.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      FlatButton(
+                        onPressed: _onClearPress,
+                        child: Text('WYCZYŚĆ',
+                            style: Theme.of(context).textTheme.button),
+                        shape: StadiumBorder(),
+                        color: Theme.of(context).buttonColor,
+                      ),
+                      Spacer(),
+                      FlatButton(
+                        onPressed: _onSearchPress,
+                        child: Text('WYSZUKAJ',
+                            style: Theme.of(context).textTheme.button),
+                        shape: StadiumBorder(),
+                        color: Theme.of(context).buttonColor,
+                      )
+                    ],
+                  )),
+              // body
+              Padding(padding: EdgeInsets.all(10.0), child: _tableBody)
+            ],
           ),
-          // buttons
-          Padding(
-              padding: EdgeInsets.all(15.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  FlatButton(
-                    onPressed: _onClearPress,
-                    child: Text('WYCZYŚĆ',
-                        style: Theme.of(context).textTheme.button),
-                    shape: StadiumBorder(),
-                    color: Theme.of(context).buttonColor,
-                  ),
-                  Spacer(),
-                  FlatButton(
-                    onPressed: _onSearchPress,
-                    child: Text('WYSZUKAJ',
-                        style: Theme.of(context).textTheme.button),
-                    shape: StadiumBorder(),
-                    color: Theme.of(context).buttonColor,
-                  )
-                ],
-              )),
-          // body
-          // TODO: add showing the table
-          SingleChildScrollView(),
-        ],
-      ),
-    );
+        ));
   }
 }
