@@ -26,10 +26,10 @@ Future<List<String>> extractIngredients(
   // Autocorrect
   extractedText = removeDiacritics(extractedText);
   // Remove interpunction
-  var regexp = RegExp(r'[\?!\"\[\];]', caseSensitive: false);
+  var regexp = RegExp(r'[\?!\"\[\];\*]', caseSensitive: false);
   extractedText = extractedText.replaceAll(regexp, '');
   // Replace sequences of words that may as well be a comma with a comma
-  regexp = RegExp(r'(w tym)|[\n\(\)\.]', caseSensitive: false);
+  regexp = RegExp(r'(w tym)|[\n\(\)\.]|(oraz)|( +i +)', caseSensitive: false);
   extractedText = extractedText.replaceAll(regexp, ',');
   // Fix up spaced E additions
   regexp = RegExp(r'e +(?=\d\d\d)', caseSensitive: false);
@@ -88,7 +88,7 @@ Future<List<String>> extractIngredients(
     var search = words.join('_').trim();
     final output = data.dictionary.search(search);
     print(search + ": " + output[0].toString());
-    if (output[0].score > 0.65) {
+    if (output[0].score > 0.67) {
       // If we found exactly the thing we were looking for, return it without doing
       // any more corrections
       return output[0].text.replaceAll('_', ' ');
@@ -96,7 +96,7 @@ Future<List<String>> extractIngredients(
     words = words.map((word) {
       // Autocorrect single words using fuzzy matching and levenshtein distance
       final output = data.dictionary.search(word);
-      if (output[0].score > 0.65) {
+      if (output[0].score > 0.67) {
         if (output[0].text.split(' ').length == 1) {
           // If we are nearly sure this is the word, return the corrected version,
           // but only if the corrected word is a single word

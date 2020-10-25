@@ -44,7 +44,7 @@ class SelectScreenState extends State<SelectScreen> {
   void initState() {
     super.initState();
     // initialize the imageWidget with the imageFile
-    _imageWidget = ExtendedImage.file(widget._imageFile, fit: BoxFit.fill,
+    _imageWidget = ExtendedImage.file(widget._imageFile, fit: BoxFit.contain,
         loadStateChanged: (ExtendedImageState state) {
       switch (state.extendedImageLoadState) {
         case LoadState.loading:
@@ -86,6 +86,9 @@ class SelectScreenState extends State<SelectScreen> {
         _loadingStackPos = 1;
         _progressText = "Przycinanie zdjęcia...";
       });
+
+      _loadingDialog(context);
+
       print('cutting the image');
       img.Image cutImageImage = await _cutUnselectedArea();
 
@@ -112,6 +115,7 @@ class SelectScreenState extends State<SelectScreen> {
         _loadingStackPos = 0;
         _progressText = '';
       });
+      Navigator.of(context).pop();
       Navigator.of(context).push(MaterialPageRoute(
           builder: (context) => SummaryScreen(resultPath, widget.data)));
     }
@@ -174,7 +178,7 @@ class SelectScreenState extends State<SelectScreen> {
     return Scaffold(
       appBar: AppBar(title: Text('Zaznacz składniki'), actions: <Widget>[
         IconButton(
-          icon: Image(image: AssetImage('assets/icon/icon.png')),
+          icon: Icon(Icons.home),
           onPressed: () => {
             // Pop screens until we arrive back at the main screen
             Navigator.popUntil(context, (route) => route.isFirst)
@@ -187,13 +191,8 @@ class SelectScreenState extends State<SelectScreen> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Expanded(
-                child:
-                    // actual image & canvas
-                    Stack(children: [
-                  Center(
-                      child: Expanded(
-                    child: drawingOverlay,
-                  )), // loading indicator
+                child: Stack(children: [
+                  Center(child: drawingOverlay),
                   IndexedStack(index: _loadingStackPos, children: [
                     Container(),
                     Center(
@@ -203,29 +202,11 @@ class SelectScreenState extends State<SelectScreen> {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
-                                  CircularProgressIndicator(),
+                                  Padding(
+                                    padding: EdgeInsets.all(15.0),
+                                    child: CircularProgressIndicator(),
+                                  ),
                                   // progress label
-                                  Stack(
-                                    children: <Widget>[
-                                      // Stroked text as border.
-                                      Text(
-                                        _progressText,
-                                        style: TextStyle(
-                                          foreground: Paint()
-                                            ..style = PaintingStyle.stroke
-                                            ..strokeWidth = 3
-                                            ..color = Colors.black,
-                                        ),
-                                      ),
-                                      // Solid text as fill.
-                                      Text(
-                                        _progressText,
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    ],
-                                  )
                                 ]))),
                   ]),
                 ]),
@@ -255,6 +236,21 @@ class SelectScreenState extends State<SelectScreen> {
             ]),
       ),
     );
+  }
+
+  Future _loadingDialog(BuildContext context) {
+    return showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            content: Column(mainAxisSize: MainAxisSize.min, children: [
+              Padding(
+                  padding: EdgeInsets.all(15.0),
+                  child: CircularProgressIndicator()),
+              Text(_progressText)
+            ]),
+          );
+        });
   }
 }
 
