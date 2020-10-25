@@ -34,6 +34,7 @@ class SelectScreenState extends State<SelectScreen> {
   Image _imageWidget;
   DrawingOverlay drawingOverlay;
 
+  // progress indicator stuff
   int _loading = 0;
   String _progressLabel = '';
 
@@ -140,12 +141,21 @@ class SelectScreenState extends State<SelectScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Zaznacz składniki')),
+      appBar: AppBar(title: Text('Zaznacz składniki'), actions: <Widget>[
+        IconButton(
+          icon: Image(image: AssetImage('assets/icon/icon.png')),
+          onPressed: () => {
+            // Pop screens until we arrive back at the main screen
+            Navigator.popUntil(context, (route) => route.isFirst)
+          },
+        )
+      ]),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            // loading indicator
             IndexedStack(index: _loading, children: [
               Container(),
               Center(
@@ -163,11 +173,13 @@ class SelectScreenState extends State<SelectScreen> {
                                 )),
                           ]))),
             ]),
+            // actual the image & canvas
             // TODO: add a loading image indicator
             Flexible(
               fit: FlexFit.tight,
               child: drawingOverlay,
             ),
+            // buttons
             Padding(
                 padding: EdgeInsets.all(8.0),
                 child: Row(

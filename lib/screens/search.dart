@@ -20,6 +20,7 @@ class SearchScreenState extends State<SearchScreen> {
   Widget _tableBody = Container();
 
   void _onClearPress() {
+    // clear the text field and the table
     txtEditController.clear();
     setState(() {
       _tableBody = Container();
@@ -38,8 +39,10 @@ class SearchScreenState extends State<SearchScreen> {
     // search with the query typed into the TextField
     var queryResponse = widget.data.dictionary.search(query);
 
+    // debug print
     print('found: $queryResponse');
 
+    // if the query is e + someNumber - you have to be specific
     double minQueryScore = 0.5;
     if (query.toLowerCase().startsWith(new RegExp(r'e\d*'))) {
       minQueryScore = 0.9;
@@ -53,8 +56,10 @@ class SearchScreenState extends State<SearchScreen> {
       }
     }
 
+    // debug print
     print('filtered: $filteredResponse');
 
+    // get a list of found ingredients
     List<String> ingredients = [];
     for (var entry in filteredResponse) {
       if (!ingredients.contains(entry.text.toLowerCase())) {
@@ -62,6 +67,7 @@ class SearchScreenState extends State<SearchScreen> {
       }
     }
 
+    // extract names, longNames and marks from the database
     List<String> names = List(ingredients.length);
     List<String> longNames = List(ingredients.length);
     List<String> marks = List(ingredients.length);
@@ -126,6 +132,7 @@ class SearchScreenState extends State<SearchScreen> {
 
     // remove null rows
     rows.retainWhere((element) => element != null);
+    // if found any ingredient
     if (rows.length > 0) {
       return SingleChildScrollView(
           child: Column(
@@ -162,7 +169,9 @@ class SearchScreenState extends State<SearchScreen> {
               ]),
         ],
       ));
-    } else {
+    }
+    // if found zero ingredients
+    else {
       return Text(
         "Nie znaleziono podobnych składników",
         textAlign: TextAlign.center,
@@ -175,7 +184,15 @@ class SearchScreenState extends State<SearchScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
         resizeToAvoidBottomInset: false,
-        appBar: AppBar(title: Text("Wyszukaj składnik")),
+        appBar: AppBar(title: Text("Wyszukaj składnik"), actions: <Widget>[
+          IconButton(
+            icon: Image(image: AssetImage('assets/icon/icon.png')),
+            onPressed: () => {
+              // Pop screens until we arrive back at the main screen
+              Navigator.popUntil(context, (route) => route.isFirst)
+            },
+          )
+        ]),
         body: Padding(
           padding: EdgeInsets.all(5.0),
           child: Column(

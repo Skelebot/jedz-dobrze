@@ -1,12 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'dart:io';
-
-// image picker
-import 'package:image_picker_gallery_camera/image_picker_gallery_camera.dart';
-
 import 'splash.dart';
-import 'select.dart';
 
 import 'package:jedzdobrze/util/extract_ingredients.dart';
 
@@ -36,21 +30,17 @@ class SummaryScreenState extends State<SummaryScreen> {
   }
 
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
-      appBar: AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text('Składniki'),
-      ),
+      appBar: AppBar(title: Text('Składniki'), actions: <Widget>[
+        IconButton(
+          icon: Image(image: AssetImage('assets/icon/icon.png')),
+          onPressed: () => {
+            // Pop screens until we arrive back at the main screen
+            Navigator.popUntil(context, (route) => route.isFirst)
+          },
+        )
+      ]),
       body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
         child: Padding(
             padding: EdgeInsets.all(15.0),
             child: Column(
