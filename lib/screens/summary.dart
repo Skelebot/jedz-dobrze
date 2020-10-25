@@ -55,7 +55,20 @@ class SummaryScreenState extends State<SummaryScreen> {
                         print(snapshot.error);
                         return snapshot.error;
                       }
-                      return CircularProgressIndicator();
+                      return Padding(
+                          padding: EdgeInsets.all(15.0),
+                          child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Center(child: CircularProgressIndicator()),
+                                Text("Odczytywanie składników...",
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    )),
+                              ]));
                     }),
                 ElevatedButton(
                     onPressed: () {

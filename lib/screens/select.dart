@@ -8,6 +8,7 @@ import 'dart:async';
 import 'package:image/image.dart' as img;
 import 'package:screenshot/screenshot.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:extended_image/extended_image.dart';
 
 import 'package:flutter/services.dart';
 
@@ -31,18 +32,37 @@ class SelectScreenState extends State<SelectScreen> {
   final ScreenshotController _screenshotController = ScreenshotController();
 
   // widget with the image from widget._imageFile
-  Image _imageWidget;
+  ExtendedImage _imageWidget;
   DrawingOverlay drawingOverlay;
 
   // progress indicator stuff
   int _loading = 0;
-  String _progressLabel = '';
+  String _progressText = '';
 
   @override
   void initState() {
     super.initState();
     // initialize the imageWidget with the imageFile
-    _imageWidget = Image.file(widget._imageFile);
+    _imageWidget = ExtendedImage.file(widget._imageFile, fit: BoxFit.fill,
+        loadStateChanged: (ExtendedImageState state) {
+      switch (state.extendedImageLoadState) {
+        case LoadState.loading:
+          return Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Center(child: CircularProgressIndicator()),
+                Text("Wczytywanie obrazu...",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    )),
+              ]);
+        default:
+          return null;
+      }
+    });
     // initialize the drawingOverlay with the imageWidget
     drawingOverlay = DrawingOverlay(_imageWidget, _screenshotController);
   }
@@ -55,14 +75,14 @@ class SelectScreenState extends State<SelectScreen> {
     // update progress indicator
     setState(() {
       _loading = 1;
-      _progressLabel = "Przycinanie zdjęcia...";
+      _progressText = "Przycinanie zdjęcia...";
     });
     print('cutting the image');
     img.Image cutImageImage = await _cutUnselectedArea();
 
     // update progress indicator
     setState(() {
-      _progressLabel = "Zapisywanie...";
+      _progressText = "Zapisywanie...";
     });
     await Future.delayed(const Duration(milliseconds: 50));
     print('saving the image');
@@ -80,7 +100,7 @@ class SelectScreenState extends State<SelectScreen> {
     // reset progress indicator
     setState(() {
       _loading = 0;
-      _progressLabel = '';
+      _progressText = '';
     });
     Navigator.of(context).push(MaterialPageRoute(
         builder: (context) => SummaryScreen(resultPath, widget.data)));
@@ -152,48 +172,67 @@ class SelectScreenState extends State<SelectScreen> {
       ]),
       body: Center(
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            // loading indicator
-            IndexedStack(index: _loading, children: [
-              Container(),
-              Center(
-                  child: Padding(
-                      padding: EdgeInsets.all(10.0),
-                      child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            CircularProgressIndicator(),
-                            Text(_progressLabel,
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                )),
-                          ]))),
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child:
+                    // actual image & canvas
+                    // TODO: add a loading image indicator
+                    Stack(children: [
+                  Center(
+                      child: Expanded(
+                    child: drawingOverlay,
+                  )), // loading indicator
+                  IndexedStack(index: _loading, children: [
+                    Container(),
+                    Center(
+                        child: Padding(
+                            padding: EdgeInsets.all(10.0),
+                            child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  CircularProgressIndicator(),
+                                  // progress label
+                                  Stack(
+                                    children: <Widget>[
+                                      // Stroked text as border.
+                                      Text(
+                                        _progressText,
+                                        style: TextStyle(
+                                          foreground: Paint()
+                                            ..style = PaintingStyle.stroke
+                                            ..strokeWidth = 3
+                                            ..color = Colors.black,
+                                        ),
+                                      ),
+                                      // Solid text as fill.
+                                      Text(
+                                        _progressText,
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ],
+                                  )
+                                ]))),
+                  ]),
+                ]),
+              ), // buttons
+              Padding(
+                  padding: EdgeInsets.all(5.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      ElevatedButton(
+                          onPressed: _onResetPress, child: Text("Resetuj")),
+                      Spacer(),
+                      ElevatedButton(
+                          onPressed: _onSavePress, child: Text("Potwierdź")),
+                    ],
+                  ))
             ]),
-            // actual the image & canvas
-            // TODO: add a loading image indicator
-            Flexible(
-              fit: FlexFit.tight,
-              child: drawingOverlay,
-            ),
-            // buttons
-            Padding(
-                padding: EdgeInsets.all(8.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    ElevatedButton(
-                        onPressed: _onResetPress, child: Text("Resetuj")),
-                    Spacer(),
-                    ElevatedButton(
-                        onPressed: _onSavePress, child: Text("Potwierdź")),
-                  ],
-                ))
-          ],
-        ),
       ),
     );
   }
@@ -205,7 +244,7 @@ class DrawingOverlay extends StatefulWidget {
     this.screenshotController,
   );
 
-  final Image _image;
+  final ExtendedImage _image;
   final ScreenshotController screenshotController;
 
   final DrawingOverlayState state = DrawingOverlayState();

@@ -30,7 +30,6 @@ class HackatonHomeState extends State<HackatonHome> {
   }
 
   void _onScanPress() async {
-    // TODO: add a prompt saying the images should be quality?
     var pickedImage = await _scanImage(ImgSource.Both);
 
     // create select_screen if image was picked
@@ -107,7 +106,8 @@ class HackatonHomeState extends State<HackatonHome> {
                   onPressed: _onSearchPress,
                   tooltip: 'Wyszukaj',
                   elevation: 3.0,
-                  icon: Icon(Icons.send, color: Theme.of(context).cursorColor),
+                  icon:
+                      Icon(Icons.search, color: Theme.of(context).cursorColor),
                   label: Text('WYSZUKAJ',
                       style: Theme.of(context).textTheme.button),
                   backgroundColor: Theme.of(context).buttonColor,

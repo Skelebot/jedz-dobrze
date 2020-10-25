@@ -259,11 +259,11 @@ Future<Widget> createIngredientTable(
               child: Row(mainAxisSize: MainAxisSize.min, children: [
             Text(
               "Ocena produkutu: ",
-              textScaleFactor: 1.6,
+              textScaleFactor: 1.5,
             ),
             Text(
               productMark,
-              textScaleFactor: 1.8,
+              textScaleFactor: 1.6,
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
           ])))
