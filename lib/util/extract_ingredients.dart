@@ -220,53 +220,69 @@ Future<Widget> createIngredientTable(
   }
 
   // FIXME: i don't know if it still does that, but i've seen it overflow somehow
-  return SingleChildScrollView(
-      child: Column(
-    children: [
-      Table(
-          border: TableBorder.all(
-              style: BorderStyle.solid, color: Color(0xffdddddd)),
-          children: [
-            TableRow(children: [
-              TableCell(
-                child: Padding(
-                    padding: EdgeInsets.all(10.0),
-                    child: Text("Nazwa",
-                        textScaleFactor: 1.5,
-                        style: TextStyle(fontWeight: FontWeight.bold))),
-              ),
-              TableCell(
-                child: Padding(
-                    padding: EdgeInsets.all(10.0),
-                    child: Text("Opis",
-                        textScaleFactor: 1.5,
-                        style: TextStyle(fontWeight: FontWeight.bold))),
-              ),
-              TableCell(
-                child: Padding(
-                    padding: EdgeInsets.all(10.0),
-                    child: Text("Ocena",
-                        textScaleFactor: 1.5,
-                        style: TextStyle(fontWeight: FontWeight.bold))),
-              ),
+  if (rows.length > 0)
+    return SingleChildScrollView(
+        child: Column(
+      children: [
+        Table(
+            border: TableBorder.all(
+                style: BorderStyle.solid, color: Color(0xffdddddd)),
+            children: [
+              TableRow(children: [
+                TableCell(
+                  child: Padding(
+                      padding: EdgeInsets.all(10.0),
+                      child: Text("Nazwa",
+                          textScaleFactor: 1.5,
+                          style: TextStyle(fontWeight: FontWeight.bold))),
+                ),
+                TableCell(
+                  child: Padding(
+                      padding: EdgeInsets.all(10.0),
+                      child: Text("Opis",
+                          textScaleFactor: 1.5,
+                          style: TextStyle(fontWeight: FontWeight.bold))),
+                ),
+                TableCell(
+                  child: Padding(
+                      padding: EdgeInsets.all(10.0),
+                      child: Text("Ocena",
+                          textScaleFactor: 1.5,
+                          style: TextStyle(fontWeight: FontWeight.bold))),
+                ),
+              ]),
+              // All the rows
+              ...rows,
             ]),
-            // All the rows
-            ...rows,
-          ]),
+        Padding(
+            padding: EdgeInsets.all(10.0),
+            child: Center(
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+              Text(
+                "Ocena produkutu: ",
+                textScaleFactor: 1.5,
+              ),
+              Text(
+                productMark,
+                textScaleFactor: 1.6,
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ])))
+      ],
+    ));
+  else
+    return Column(children: [
+      Text(
+        "Nie znaleziono składników",
+        textAlign: TextAlign.center,
+        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 28),
+      ),
       Padding(
-          padding: EdgeInsets.all(10.0),
-          child: Center(
-              child: Row(mainAxisSize: MainAxisSize.min, children: [
-            Text(
-              "Ocena produkutu: ",
-              textScaleFactor: 1.5,
-            ),
-            Text(
-              productMark,
-              textScaleFactor: 1.6,
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ])))
-    ],
-  ));
+          padding: EdgeInsets.all(15.0),
+          child: Text(
+            "Upewnij się, że tekst na zdjęciu jest dobrze widoczny",
+            textAlign: TextAlign.center,
+            softWrap: true,
+          )),
+    ]);
 }

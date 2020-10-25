@@ -214,15 +214,19 @@ class SearchScreenState extends State<SearchScreen> {
                       FlatButton(
                         onPressed: _onClearPress,
                         child: Text('WYCZYŚĆ',
-                            style: Theme.of(context).textTheme.button),
+                            style: TextStyle(
+                                color: Theme.of(context).primaryColorDark)),
                         shape: StadiumBorder(),
                         color: Theme.of(context).buttonColor,
                       ),
                       Spacer(),
                       FlatButton(
                         onPressed: _onSearchPress,
-                        child: Text('WYSZUKAJ',
-                            style: Theme.of(context).textTheme.button),
+                        child: Text(
+                          'WYSZUKAJ',
+                          style: TextStyle(
+                              color: Theme.of(context).primaryColorDark),
+                        ),
                         shape: StadiumBorder(),
                         color: Theme.of(context).buttonColor,
                       )
