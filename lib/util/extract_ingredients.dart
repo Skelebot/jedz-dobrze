@@ -219,13 +219,14 @@ Future<Widget> createIngredientTable(
     productMark = "Bardzo niezdrowy";
   }
 
-  return Column(
+  // FIXME: i don't know if it still does that, but i've seen it overflow somehow
+  return SingleChildScrollView(
+      child: Column(
     children: [
-      SingleChildScrollView(
-          child: Table(
-              border: TableBorder.all(
-                  style: BorderStyle.solid, color: Color(0xffdddddd)),
-              children: [
+      Table(
+          border: TableBorder.all(
+              style: BorderStyle.solid, color: Color(0xffdddddd)),
+          children: [
             TableRow(children: [
               TableCell(
                 child: Padding(
@@ -251,7 +252,7 @@ Future<Widget> createIngredientTable(
             ]),
             // All the rows
             ...rows,
-          ])),
+          ]),
       Padding(
           padding: EdgeInsets.all(10.0),
           child: Center(
@@ -267,5 +268,5 @@ Future<Widget> createIngredientTable(
             ),
           ])))
     ],
-  );
+  ));
 }

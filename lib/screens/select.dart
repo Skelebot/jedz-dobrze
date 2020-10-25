@@ -168,15 +168,18 @@ class SelectScreenState extends State<SelectScreen> {
               fit: FlexFit.tight,
               child: drawingOverlay,
             ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                ElevatedButton(
-                    onPressed: _onResetPress, child: Text("Resetuj")),
-                ElevatedButton(
-                    onPressed: _onSavePress, child: Text("Potwierdź")),
-              ],
-            )
+            Padding(
+                padding: EdgeInsets.all(8.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    ElevatedButton(
+                        onPressed: _onResetPress, child: Text("Resetuj")),
+                    Spacer(),
+                    ElevatedButton(
+                        onPressed: _onSavePress, child: Text("Potwierdź")),
+                  ],
+                ))
           ],
         ),
       ),

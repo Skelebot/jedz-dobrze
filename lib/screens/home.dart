@@ -4,8 +4,8 @@ import 'dart:io';
 
 import 'splash.dart';
 import 'select.dart';
+import 'search.dart';
 
-import 'package:woozy_search/woozy_search.dart' as woozy;
 // image picker
 import 'package:image_picker_gallery_camera/image_picker_gallery_camera.dart';
 
@@ -29,10 +29,6 @@ class HackatonHome extends StatefulWidget {
 }
 
 class HackatonHomeState extends State<HackatonHome> {
-  final minQueryScore = 0.5;
-
-  String inputText;
-
   // TODO: maybe add an option to scroll through the whole list?
 
   @override
@@ -40,22 +36,9 @@ class HackatonHomeState extends State<HackatonHome> {
     super.initState();
   }
 
-  // TODO: add decent-looking showing of searched data
   void _onSearchPress() {
-    // search with the query typed into the TextField
-    var queryResponse = widget.data.dictionary.search(inputText);
-
-    // filter the response using the minQueryScore value
-    var filteredResponse = [];
-    for (var entry in queryResponse) {
-      if (entry.score >= minQueryScore) {
-        filteredResponse.add(entry);
-      }
-    }
-    var ob = filteredResponse[0];
-    widget.data.values.indexOf(filteredResponse[0]);
-
-    print(filteredResponse);
+    Navigator.of(context).push(
+        MaterialPageRoute(builder: (context) => SearchScreen(widget.data)));
   }
 
   void _onScanPress() async {
@@ -106,46 +89,48 @@ class HackatonHomeState extends State<HackatonHome> {
         // Here we take the value from the MyHomePage object that was created by
         // the App.build method, and use it to set our appbar title.
         title: Text(widget.title),
+        //TODO: Add icon to appbar.
       ),
       body: Center(
         // Center is a layout widget. It takes a single child and positions it
         // in the middle of the parent.
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            TextField(
-              onChanged: (value) => inputText = value,
-              decoration: InputDecoration(
-                  labelText: 'Szukaj po nazwie',
-                  hintText: 'Podaj nazwę składnika'),
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                FlatButton(
-                  onPressed: _onSearchPress,
-                  child: Text('WYSZUKAJ',
-                      style: Theme.of(context).textTheme.button),
-                  shape: StadiumBorder(),
-                  color: Theme.of(context).buttonColor,
-                )
-              ],
-            ),
-          ],
+          // TODO: add home page contents (like some text or something)
+          children: <Widget>[],
         ),
       ),
       // ActionButton na środku
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       floatingActionButton: Padding(
           padding: const EdgeInsets.only(bottom: 24),
-          child: FloatingActionButton.extended(
-            onPressed: () => _onScanPress(),
-            tooltip: 'Skanuj',
-            elevation: 3.0,
-            icon: Icon(Icons.camera, color: Theme.of(context).cursorColor),
-            label: Text('SKANUJ', style: Theme.of(context).textTheme.button),
-            backgroundColor: Theme.of(context).buttonColor,
-          )),
+          child: Padding(
+              padding: EdgeInsets.all(15.0),
+              child:
+                  Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                FloatingActionButton.extended(
+                  heroTag: "scanButton",
+                  onPressed: _onScanPress,
+                  tooltip: 'Skanuj',
+                  elevation: 3.0,
+                  icon:
+                      Icon(Icons.camera, color: Theme.of(context).cursorColor),
+                  label:
+                      Text('SKANUJ', style: Theme.of(context).textTheme.button),
+                  backgroundColor: Theme.of(context).buttonColor,
+                ),
+                Spacer(),
+                FloatingActionButton.extended(
+                  heroTag: "searchButton",
+                  onPressed: _onSearchPress,
+                  tooltip: 'Wyszukaj',
+                  elevation: 3.0,
+                  icon: Icon(Icons.send, color: Theme.of(context).cursorColor),
+                  label: Text('WYSZUKAJ',
+                      style: Theme.of(context).textTheme.button),
+                  backgroundColor: Theme.of(context).buttonColor,
+                )
+              ]))),
     );
   }
 }
