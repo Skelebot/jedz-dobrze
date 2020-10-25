@@ -15,14 +15,15 @@ class SearchScreen extends StatefulWidget {
 }
 
 class SearchScreenState extends State<SearchScreen> {
-  final minQueryScore = 0.5;
-
   final TextEditingController txtEditController = TextEditingController();
 
   Widget _tableBody = Container();
 
   void _onClearPress() {
     txtEditController.clear();
+    setState(() {
+      _tableBody = Container();
+    });
   }
 
   void _onSubmit(String text) {
@@ -38,6 +39,11 @@ class SearchScreenState extends State<SearchScreen> {
     var queryResponse = widget.data.dictionary.search(query);
 
     print('found: $queryResponse');
+
+    double minQueryScore = 0.5;
+    if (query.toLowerCase().startsWith(new RegExp(r'e\d*'))) {
+      minQueryScore = 0.9;
+    }
 
     // filter the response using the minQueryScore value
     var filteredResponse = [];
